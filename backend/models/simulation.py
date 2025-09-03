@@ -1,23 +1,50 @@
-from pydantic import BaseModel, Field
-from typing import List, Optional, Dict, Any
+from pydantic import BaseModel, Field, field_validator
+from typing import List, Optional, Dict, Any, Union
 from datetime import datetime
 import uuid
 
 class LifeChoice(BaseModel):
+    model_config = {"extra": "ignore"}  # Ignore extra fields
+    
     title: str
     description: str
     category: str  # career, location, education, relationship, etc.
 
 class UserContext(BaseModel):
-    age: Optional[str] = None
+    model_config = {"extra": "ignore"}  # Ignore extra fields
+    
+    age: Optional[Union[str, int]] = None
     current_location: Optional[str] = None
-    current_salary: Optional[str] = None
+    current_salary: Optional[Union[str, int, float]] = None
     education_level: Optional[str] = None
+    
+    @field_validator('age', mode='before')
+    @classmethod
+    def convert_age_to_string(cls, v):
+        if v is not None:
+            return str(v)
+        return v
+    
+    @field_validator('current_salary', mode='before')
+    @classmethod
+    def convert_salary_to_string(cls, v):
+        if v is not None:
+            return str(v)
+        return v
 
 class SimulationRequest(BaseModel):
+    model_config = {"extra": "ignore"}  # Ignore extra fields
+    
     choice_a: LifeChoice
     choice_b: LifeChoice
-    user_context: Optional[UserContext] = UserContext()
+    user_context: Optional[UserContext] = None
+    
+    @field_validator('user_context', mode='before')
+    @classmethod
+    def validate_user_context(cls, v):
+        if v is None or v == {}:
+            return UserContext()
+        return v
 
 class TimelinePoint(BaseModel):
     year: int
@@ -32,7 +59,7 @@ class Simulation(BaseModel):
     user_id: Optional[str] = None
     choice_a: LifeChoice
     choice_b: LifeChoice
-    user_context: UserContext
+    user_context: Optional[UserContext] = None
     choice_a_timeline: List[TimelinePoint]
     choice_b_timeline: List[TimelinePoint]
     summary: str

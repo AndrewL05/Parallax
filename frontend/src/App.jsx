@@ -28,11 +28,23 @@ const AppContent = () => {
 
   const handleSimulationSubmit = async (formData) => {
     try {
+      console.log("Submitting simulation data:", formData); // Debug log
       await createSimulation(formData);
       setCurrentView("results");
     } catch (error) {
       console.error("Simulation failed:", error);
-      alert("Failed to generate simulation. Please try again.");
+
+      // Better error handling for validation errors
+      let errorMessage = "Failed to generate simulation. Please try again.";
+      if (error.message.includes("Input should be a valid string")) {
+        errorMessage =
+          "Please check that all fields are filled correctly. Age and salary should be numbers.";
+      } else if (error.message.includes("422")) {
+        errorMessage =
+          "There was an issue with your input data. Please check all fields and try again.";
+      }
+
+      alert(errorMessage);
     }
   };
 

@@ -6,28 +6,35 @@ from typing import Dict, Any
 logger = logging.getLogger(__name__)
 
 # Initialize Stripe
-stripe_api_key = os.environ.get('STRIPE_SECRET_KEY')
-stripe_checkout = StripeCheckout(api_key=stripe_api_key) if stripe_api_key else None
+stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
 async def create_stripe_checkout(amount: float, currency: str, success_url: str, cancel_url: str, metadata: dict = None):
     """Create Stripe checkout session"""
-    if not stripe_checkout:
+    if not stripe.api_key:
         raise Exception("Stripe not configured")
     
     try:
-        checkout_request = CheckoutSessionRequest(
-            amount=amount,
-            currency=currency,
+        session = stripe.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{
+                'price_data': {
+                    'currency': currency,
+                    'product_data': {
+                        'name': 'Parallax Premium',
+                    },
+                    'unit_amount': int(amount * 100),  # Convert to cents
+                },
+                'quantity': 1,
+            }],
+            mode='payment',
             success_url=success_url,
             cancel_url=cancel_url,
             metadata=metadata or {}
         )
         
-        session = await stripe_checkout.create_checkout_session(checkout_request)
-        
         return {
             "url": session.url,
-            "session_id": session.session_id
+            "session_id": session.id
         }
         
     except Exception as e:
@@ -36,18 +43,29 @@ async def create_stripe_checkout(amount: float, currency: str, success_url: str,
 
 async def get_stripe_payment_status(session_id: str):
     """Get payment status from Stripe"""
-    if not stripe_checkout:
+    if not stripe.api_key:
         raise Exception("Stripe not configured")
     
     try:
-        status_response = await stripe_checkout.get_checkout_status(session_id)
+        session = stripe.checkout.Session.retrieve(session_id)
+        
+        # Map Stripe payment status to our expected values
+        status_mapping = {
+            "paid": "paid",
+            "unpaid": "initiated",
+            "no_payment_required": "paid",
+        }
+        
+        logger.info(f"Stripe session payment_status: {session.payment_status}")
+        payment_status = status_mapping.get(session.payment_status, "initiated")
+        logger.info(f"Mapped payment_status: {payment_status}")
         
         return {
-            "payment_status": status_response.payment_status,
-            "amount_total": status_response.amount_total,
-            "currency": status_response.currency,
-            "status": status_response.status,
-            "metadata": status_response.metadata
+            "payment_status": payment_status,
+            "amount_total": session.amount_total,
+            "currency": session.currency,
+            "status": session.status,
+            "metadata": session.metadata
         }
         
     except Exception as e:

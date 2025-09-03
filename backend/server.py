@@ -1,7 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from pydantic import ValidationError
 import logging
 import os
+import json
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -10,10 +14,10 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # Import routes
-from .routes.auth import router as auth_router
-from .routes.simulation import router as simulation_router  
-from .routes.payments import router as payments_router
-from .database import init_database, close_database
+from routes.auth import router as auth_router
+from routes.simulation import router as simulation_router  
+from routes.payments import router as payments_router
+from database import init_database, close_database
 
 # Initialize FastAPI app
 app = FastAPI(title="Parallax Life Simulator API", version="1.0.0")
@@ -21,15 +25,40 @@ app = FastAPI(title="Parallax Life Simulator API", version="1.0.0")
 # CORS middleware
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:5173", "http://127.0.0.1:5173"],
     allow_credentials=True,
-    allow_origins=["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Debug middleware to log requests 
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    if request.url.path == "/api/simulate":
+        logger.info(f"🔍 Request method: {request.method}")
+        logger.info(f"🔍 Request path: {request.url.path}")
+        logger.info(f"🔍 Content-Type: {request.headers.get('content-type')}")
+        logger.info(f"🔍 Authorization header: {bool(request.headers.get('authorization'))}")
+    
+    response = await call_next(request)
+    return response
+
 # Logging setup
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Custom validation error handler
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logger.error(f"❌ Validation error on {request.url.path}: {exc.errors()}")
+    
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": exc.errors(),
+            "message": "Request validation failed"
+        }
+    )
 
 # Include routers
 app.include_router(auth_router, prefix="/api")
@@ -73,4 +102,4 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8001)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

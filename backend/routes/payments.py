@@ -3,10 +3,10 @@ from typing import Optional
 import logging
 from datetime import datetime
 
-from ..models.payment import PaymentTransaction, PaymentStatus, CheckoutRequest
-from ..database import get_database
-from ..auth import get_current_user
-from ..services.stripe_service import create_stripe_checkout, get_stripe_payment_status
+from models.payment import PaymentTransaction, PaymentStatus, CheckoutRequest
+from database import get_database
+from auth import get_current_user
+from services.stripe_service import create_stripe_checkout, get_stripe_payment_status
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/payments", tags=["payments"])

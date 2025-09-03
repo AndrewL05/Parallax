@@ -3,12 +3,12 @@ from typing import List, Optional
 import logging
 import json
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from ..models.simulation import SimulationRequest, Simulation, SimulationResult, TimelinePoint
-from ..database import get_database
-from ..auth import get_current_user
-from ..services.ai_service import generate_life_simulation
+from models.simulation import SimulationRequest, Simulation, SimulationResult, TimelinePoint, UserContext
+from database import get_database
+from auth import get_current_user
+from services.ai_service import generate_life_simulation
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["simulation"])
@@ -19,6 +19,9 @@ async def create_life_simulation(
     current_user: Optional[dict] = Depends(get_current_user)
 ):
     """Generate AI-powered life simulation comparing two choices"""
+    logger.info(f"🔍 Received simulation request: {request}")
+    logger.info(f"🔍 Request dict: {request.dict()}")
+    
     db = await get_database()
     user_id = current_user.get("id") if current_user else None
     
@@ -27,7 +30,6 @@ async def create_life_simulation(
         user_doc = await db.users.find_one({"clerk_id": current_user["clerk_id"]})
         if user_doc and user_doc.get("subscription_tier") == "free":
             # Check simulation count for free users (limit to 3 per month)
-            from datetime import datetime, timedelta
             thirty_days_ago = datetime.utcnow() - timedelta(days=30)
             
             simulation_count = await db.simulations.count_documents({
@@ -50,7 +52,7 @@ async def create_life_simulation(
             user_id=str(user_id) if user_id else None,
             choice_a=request.choice_a,
             choice_b=request.choice_b,
-            user_context=request.user_context,
+            user_context=request.user_context or UserContext(),
             choice_a_timeline=[TimelinePoint(**point) for point in ai_data["choice_a_timeline"]],
             choice_b_timeline=[TimelinePoint(**point) for point in ai_data["choice_b_timeline"]],
             summary=ai_data.get("summary", "Simulation completed successfully.")
