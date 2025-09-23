@@ -13,7 +13,7 @@ class ApiService {
       signal:
         endpoint === "/simulate"
           ? AbortSignal.timeout(30000) // 30 second timeout for simulations
-          : AbortSignal.timeout(15000), // 15 second timeout for other requests
+          : AbortSignal.timeout(25000), // 25 second timeout for other requests
       ...options,
     };
 
@@ -58,9 +58,9 @@ class ApiService {
   async post(endpoint, data, headers = {}) {
     const mergedHeaders = {
       "Content-Type": "application/json",
-      ...headers
+      ...headers,
     };
-    
+
     console.log("🔍 API POST Debug:", {
       endpoint,
       data,
@@ -68,9 +68,9 @@ class ApiService {
       isArray: Array.isArray(data),
       serialized: JSON.stringify(data),
       originalHeaders: headers,
-      mergedHeaders
+      mergedHeaders,
     });
-    
+
     return this.request(endpoint, {
       method: "POST",
       headers: mergedHeaders,

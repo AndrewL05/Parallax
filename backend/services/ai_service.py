@@ -38,51 +38,32 @@ async def generate_life_simulation(request: SimulationRequest) -> Dict[str, Any]
         return generate_fallback_data(request)
     
     try:
-        # Create optimized prompt for faster generation with realistic constraints
-        prompt = f"""
-        Generate a JSON life simulation comparing two paths. Be concise and realistic.
-        
-        Choice A: {request.choice_a.title} - {request.choice_a.description}
-        Choice B: {request.choice_b.title} - {request.choice_b.description}
-        Context: Age {request.user_context.age or 25}, {request.user_context.current_location or 'US'}
-        
-        IMPORTANT CONSTRAINTS:
-        - For Teacher careers: Salaries must be between $40,000 - $120,000
-        - For Engineer careers: Salaries must be between $60,000 - $250,000
-        - For other careers: Keep salaries realistic for the profession
-        - Happiness scores: Must be between 1.0 - 10.0
-        - Show realistic career progression over 10 years
-        - Summary must be at least 200 characters and provide meaningful comparison
-        
-        Return ONLY valid JSON in this exact format:
-        {{
-            "choice_a_timeline": [
-                {{"year": 1, "salary": 75000, "happiness_score": 7.5, "major_event": "Started new position", "location": "City", "career_title": "Job Title"}},
-                {{"year": 2, "salary": 78000, "happiness_score": 7.8, "major_event": "Promotion", "location": "City", "career_title": "Senior Job Title"}},
-                {{"year": 3, "salary": 82000, "happiness_score": 8.0, "major_event": "Skill development", "location": "City", "career_title": "Senior Job Title"}},
-                {{"year": 4, "salary": 87000, "happiness_score": 8.2, "major_event": "Team lead role", "location": "City", "career_title": "Lead Title"}},
-                {{"year": 5, "salary": 92000, "happiness_score": 8.1, "major_event": "Major project success", "location": "City", "career_title": "Lead Title"}},
-                {{"year": 6, "salary": 98000, "happiness_score": 8.3, "major_event": "Management role", "location": "City", "career_title": "Manager Title"}},
-                {{"year": 7, "salary": 105000, "happiness_score": 8.5, "major_event": "Department growth", "location": "City", "career_title": "Manager Title"}},
-                {{"year": 8, "salary": 112000, "happiness_score": 8.4, "major_event": "Strategic planning", "location": "City", "career_title": "Senior Manager"}},
-                {{"year": 9, "salary": 120000, "happiness_score": 8.6, "major_event": "Executive role", "location": "City", "career_title": "Director"}},
-                {{"year": 10, "salary": 130000, "happiness_score": 8.8, "major_event": "Industry recognition", "location": "City", "career_title": "Director"}}
-            ],
-            "choice_b_timeline": [
-                {{"year": 1, "salary": 65000, "happiness_score": 8.0, "major_event": "New venture start", "location": "City", "career_title": "Entrepreneur"}},
-                {{"year": 2, "salary": 70000, "happiness_score": 7.5, "major_event": "Client acquisition", "location": "City", "career_title": "Founder"}},
-                {{"year": 3, "salary": 68000, "happiness_score": 7.8, "major_event": "Market challenges", "location": "City", "career_title": "Founder"}},
-                {{"year": 4, "salary": 85000, "happiness_score": 8.5, "major_event": "Business growth", "location": "City", "career_title": "CEO"}},
-                {{"year": 5, "salary": 95000, "happiness_score": 8.7, "major_event": "Team expansion", "location": "City", "career_title": "CEO"}},
-                {{"year": 6, "salary": 110000, "happiness_score": 8.9, "major_event": "Major contract", "location": "City", "career_title": "CEO"}},
-                {{"year": 7, "salary": 125000, "happiness_score": 8.6, "major_event": "Market expansion", "location": "City", "career_title": "CEO"}},
-                {{"year": 8, "salary": 140000, "happiness_score": 8.8, "major_event": "Strategic partnerships", "location": "City", "career_title": "CEO"}},
-                {{"year": 9, "salary": 160000, "happiness_score": 9.0, "major_event": "Industry leadership", "location": "City", "career_title": "CEO"}},
-                {{"year": 10, "salary": 180000, "happiness_score": 9.2, "major_event": "Exit opportunity", "location": "City", "career_title": "CEO"}}
-            ],
-            "summary": "Choice A offers stability and steady growth in a traditional career path with predictable advancement opportunities and work-life balance. The compensation grows steadily but may have a lower ceiling. Choice B provides higher potential returns and faster financial growth but comes with more variability, risk, and demanding schedules. Consider your risk tolerance, long-term financial goals, personal values around stability vs. growth, and desired work-life balance when making this important life decision. Both paths offer meaningful career satisfaction but through different approaches to professional development and financial security."
-        }}
-        """
+        # Create comprehensive prompt for GPT-3.5-turbo
+        prompt = f"""Generate a realistic 10-year career progression comparison between two paths.
+
+**Choice A:** {request.choice_a.title}
+Description: {request.choice_a.description}
+
+**Choice B:** {request.choice_b.title}  
+Description: {request.choice_b.description}
+
+**Context:** Age {request.user_context.age or 25}, Location: {request.user_context.current_location or 'United States'}
+
+Please create realistic salary progressions and happiness scores (1-10 scale) for each career path over 10 years. Consider typical industry standards, advancement opportunities, and work-life balance factors.
+
+Return your response as valid JSON only:
+
+{{
+  "choice_a_timeline": [
+    {{"year": 1, "salary": [realistic_starting_salary], "happiness_score": [1-10], "major_event": "[career milestone]", "location": "{request.user_context.current_location or 'City'}", "career_title": "[job title]"}},
+    [... continue for years 2-10 with realistic progression ...]
+  ],
+  "choice_b_timeline": [
+    {{"year": 1, "salary": [realistic_starting_salary], "happiness_score": [1-10], "major_event": "[career milestone]", "location": "{request.user_context.current_location or 'City'}", "career_title": "[job title]"}},
+    [... continue for years 2-10 with realistic progression ...]
+  ],
+  "summary": "[200+ character comparison highlighting key differences, trade-offs, and considerations for choosing between these paths]"
+}}"""
         
         logger.info("🤖 Making OpenRouter API call...")
         
@@ -98,14 +79,13 @@ async def generate_life_simulation(request: SimulationRequest) -> Dict[str, Any]
                         {"role": "user", "content": prompt}
                     ],
                     temperature=0.7,
-                    max_tokens=2000,
-                    timeout=20  # 20 second timeout
+                    max_tokens=3000  # Increased to 3000 for full response
                 ),
-                timeout=15.0  # 15 second total timeout
+                timeout=45.0  # Increased timeout to 45 seconds
             )
             logger.info("✅ OpenRouter API call successful")
         except asyncio.TimeoutError:
-            logger.error("❌ OpenRouter API call timed out after 15 seconds")
+            logger.error("❌ OpenRouter API call timed out after 45 seconds")
             raise Exception("API call timed out")
         
         # Parse the AI response
@@ -113,15 +93,67 @@ async def generate_life_simulation(request: SimulationRequest) -> Dict[str, Any]
         logger.info(f"AI response received, length: {len(ai_content)}")
         logger.info(f"AI response preview: {ai_content[:200]}...")
         
+        # Debug: Check if content is empty
+        if not ai_content or ai_content.strip() == "":
+            logger.error("AI response content is empty!")
+            return generate_fallback_data(request)
+        
+        # Clean up response (remove special tokens that some models add)
+        ai_content = ai_content.strip()
+        if ai_content.startswith('<s>'):
+            ai_content = ai_content[3:].strip()
+        if ai_content.startswith('[BOT]'):
+            ai_content = ai_content[5:].strip()
+        if ai_content.startswith('[INST]'):
+            ai_content = ai_content[6:].strip()
+        if ai_content.endswith('</s>'):
+            ai_content = ai_content[:-4].strip()
+            
+        logger.info(f"Cleaned AI response preview: {ai_content[:200]}...")
+        
         # Extract JSON from response (handle potential markdown formatting)
-        json_match = re.search(r'\{.*\}', ai_content, re.DOTALL)
-        if json_match:
-            ai_data = json.loads(json_match.group())
-            logger.info("✅ Successfully parsed AI response JSON")
+        # Try multiple JSON extraction methods
+        ai_data = None
+        
+        # Method 1: Try direct JSON parsing (if response is pure JSON)
+        try:
+            ai_data = json.loads(ai_content.strip())
+            logger.info("✅ Successfully parsed AI response as direct JSON")
+        except json.JSONDecodeError as e:
+            logger.debug(f"Direct JSON parsing failed: {e}")
+            pass
+        
+        # Method 2: Extract JSON from markdown code blocks
+        if ai_data is None:
+            # More robust regex for markdown code blocks
+            json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', ai_content, re.DOTALL)
+            if json_match:
+                try:
+                    json_str = json_match.group(1).strip()
+                    ai_data = json.loads(json_str)
+                    logger.info("✅ Successfully parsed AI response from markdown code block")
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Markdown JSON parsing failed: {e}")
+                    pass
+        
+        # Method 3: Extract any JSON-like structure
+        if ai_data is None:
+            json_match = re.search(r'\{.*\}', ai_content, re.DOTALL)
+            if json_match:
+                try:
+                    ai_data = json.loads(json_match.group())
+                    logger.info("✅ Successfully parsed AI response from JSON pattern")
+                except json.JSONDecodeError as e:
+                    logger.warning(f"JSON pattern parsing failed: {e}")
+                    pass
+            else:
+                logger.warning("No JSON pattern found in AI response")
+        
+        if ai_data:
             return ai_data
         else:
-            logger.warning(f"❌ Failed to parse AI response, using fallback data. Response: {ai_content}")
-            # Fallback if JSON parsing fails
+            logger.warning(f"❌ Failed to parse AI response with all methods, using fallback data")
+            logger.warning(f"Response content: {ai_content}")
             return generate_fallback_data(request)
         
     except Exception as e:
