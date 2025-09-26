@@ -28,7 +28,7 @@ const AppContent = () => {
 
   const handleSimulationSubmit = async (formData) => {
     try {
-      console.log("Submitting simulation data:", formData); // Debug log
+      console.log("Submitting simulation data:", formData);
       await createSimulation(formData);
       setCurrentView("results");
     } catch (error) {
