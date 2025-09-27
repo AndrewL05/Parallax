@@ -1,27 +1,33 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import type { SimulationFormData, Choice, UserContextForm } from "../types/simulation";
 
-const LifeChoiceForm = ({ onSubmit, isLoading }) => {
-  const [choiceA, setChoiceA] = useState({
+interface LifeChoiceFormProps {
+  onSubmit: (formData: SimulationFormData) => Promise<void>;
+  isLoading: boolean;
+}
+
+const LifeChoiceForm: React.FC<LifeChoiceFormProps> = ({ onSubmit, isLoading }) => {
+  const [choiceA, setChoiceA] = useState<Choice>({
     title: "",
     description: "",
     category: "career",
   });
 
-  const [choiceB, setChoiceB] = useState({
+  const [choiceB, setChoiceB] = useState<Choice>({
     title: "",
     description: "",
     category: "career",
   });
 
-  const [userContext, setUserContext] = useState({
+  const [userContext, setUserContext] = useState<UserContextForm>({
     age: "",
     current_location: "",
     current_salary: "",
     education_level: "",
   });
 
-  const categories = [
+  const categories: string[] = [
     "career",
     "location",
     "education",
@@ -29,7 +35,7 @@ const LifeChoiceForm = ({ onSubmit, isLoading }) => {
     "lifestyle",
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
 
     // Debug: Log the raw form state
@@ -39,7 +45,7 @@ const LifeChoiceForm = ({ onSubmit, isLoading }) => {
     console.log("userContext:", userContext);
 
     // Transform user context data to ensure proper types
-    const transformedUserContext = {
+    const transformedUserContext: any = {
       ...userContext,
       // Convert age to integer if provided, otherwise keep as null/empty
       age: userContext.age ? parseInt(userContext.age, 10) : null,
@@ -66,7 +72,7 @@ const LifeChoiceForm = ({ onSubmit, isLoading }) => {
     }
 
     // Auto-detect categories for better UX
-    const detectCategory = (title, selectedCategory) => {
+    const detectCategory = (title: string, selectedCategory: string): string => {
       const titleLower = title.toLowerCase();
       if (
         titleLower.includes("university") ||
@@ -88,7 +94,7 @@ const LifeChoiceForm = ({ onSubmit, isLoading }) => {
     };
 
     // Ensure clean data structure
-    const cleanedData = {
+    const cleanedData: SimulationFormData = {
       choice_a: {
         title: choiceA.title || "",
         description: choiceA.description || "",

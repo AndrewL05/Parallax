@@ -1,10 +1,12 @@
+import type { RequestOptions } from '../types/api';
+
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
 const API_BASE = `${BACKEND_URL}/api`;
 
 class ApiService {
-  async request(endpoint, options = {}) {
+  async request<T = any>(endpoint: string, options: RequestOptions = {}): Promise<T> {
     const url = `${API_BASE}${endpoint}`;
-    const config = {
+    const config: RequestInit = {
       headers: {
         "Content-Type": "application/json",
         ...options.headers,
@@ -42,7 +44,7 @@ class ApiService {
 
       return response.json();
     } catch (error) {
-      if (error.name === "AbortError") {
+      if (error instanceof Error && error.name === "AbortError") {
         throw new Error(
           "Request timed out. The simulation is taking longer than expected. Please try again."
         );
@@ -51,11 +53,11 @@ class ApiService {
     }
   }
 
-  async get(endpoint, headers = {}) {
-    return this.request(endpoint, { method: "GET", headers });
+  async get<T = any>(endpoint: string, headers: Record<string, string> = {}): Promise<T> {
+    return this.request<T>(endpoint, { method: "GET", headers });
   }
 
-  async post(endpoint, data, headers = {}) {
+  async post<T = any>(endpoint: string, data: any, headers: Record<string, string> = {}): Promise<T> {
     const mergedHeaders = {
       "Content-Type": "application/json",
       ...headers,
@@ -71,23 +73,23 @@ class ApiService {
       mergedHeaders,
     });
 
-    return this.request(endpoint, {
+    return this.request<T>(endpoint, {
       method: "POST",
       headers: mergedHeaders,
       body: JSON.stringify(data),
     });
   }
 
-  async put(endpoint, data, headers = {}) {
-    return this.request(endpoint, {
+  async put<T = any>(endpoint: string, data: any, headers: Record<string, string> = {}): Promise<T> {
+    return this.request<T>(endpoint, {
       method: "PUT",
       headers,
       body: JSON.stringify(data),
     });
   }
 
-  async delete(endpoint, headers = {}) {
-    return this.request(endpoint, { method: "DELETE", headers });
+  async delete<T = any>(endpoint: string, headers: Record<string, string> = {}): Promise<T> {
+    return this.request<T>(endpoint, { method: "DELETE", headers });
   }
 }
 

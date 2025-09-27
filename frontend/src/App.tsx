@@ -3,7 +3,6 @@ import { ClerkProvider } from "@clerk/clerk-react";
 import { motion, AnimatePresence } from "framer-motion";
 import "./App.css";
 
-// Components
 import Navigation from "./components/Navigation";
 import HeroSection from "./components/Hero";
 import FeaturesSection from "./components/Features";
@@ -13,20 +12,24 @@ import FooterSection from "./components/Footer";
 import LifeChoiceForm from "./components/LifeChoiceForm";
 import SimulationResults from "./components/SimulationResults";
 
-// Hooks
 import { useAuth } from "./hooks/useAuth";
 import { useSimulation } from "./hooks/useSimulation";
 
+import type { SimulationFormData } from "./types/simulation";
+
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-// Main App Content Component
-const AppContent = () => {
-  const [currentView, setCurrentView] = useState("home");
-  const { isSignedIn } = useAuth();
+type ViewType = "home" | "results";
+
+const AppContent: React.FC = () => {
+  const [currentView, setCurrentView] = useState<ViewType>("home");
+  const {} = useAuth();
   const { simulation, isLoading, createSimulation, resetSimulation } =
     useSimulation();
 
-  const handleSimulationSubmit = async (formData) => {
+  const handleSimulationSubmit = async (
+    formData: SimulationFormData
+  ): Promise<void> => {
     try {
       console.log("Submitting simulation data:", formData);
       await createSimulation(formData);
@@ -34,26 +37,27 @@ const AppContent = () => {
     } catch (error) {
       console.error("Simulation failed:", error);
 
-      // Better error handling for validation errors
       let errorMessage = "Failed to generate simulation. Please try again.";
-      if (error.message.includes("Input should be a valid string")) {
-        errorMessage =
-          "Please check that all fields are filled correctly. Age and salary should be numbers.";
-      } else if (error.message.includes("422")) {
-        errorMessage =
-          "There was an issue with your input data. Please check all fields and try again.";
+      if (error instanceof Error) {
+        if (error.message.includes("Input should be a valid string")) {
+          errorMessage =
+            "Please check that all fields are filled correctly. Age and salary should be numbers.";
+        } else if (error.message.includes("422")) {
+          errorMessage =
+            "There was an issue with your input data. Please check all fields and try again.";
+        }
       }
 
       alert(errorMessage);
     }
   };
 
-  const handleNewSimulation = () => {
+  const handleNewSimulation = (): void => {
     resetSimulation();
     setCurrentView("home");
   };
 
-  const handleLogoClick = () => {
+  const handleLogoClick = (): void => {
     resetSimulation();
     setCurrentView("home");
   };
@@ -76,7 +80,6 @@ const AppContent = () => {
               <FeaturesSection />
               <HowItWorksSection />
 
-              {/* Simulator Section */}
               <section
                 id="simulator"
                 className="py-20 bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100"
@@ -137,8 +140,7 @@ const AppContent = () => {
   );
 };
 
-// Main App Component
-function App() {
+const App: React.FC = () => {
   if (!CLERK_PUBLISHABLE_KEY) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -152,6 +154,6 @@ function App() {
       <AppContent />
     </ClerkProvider>
   );
-}
+};
 
 export default App;
