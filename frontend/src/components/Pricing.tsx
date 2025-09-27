@@ -3,18 +3,29 @@ import { motion } from "framer-motion";
 import { useAuth } from "@clerk/clerk-react";
 import { stripeService } from "../services/stripeService";
 
-const PricingSection = () => {
+interface Plan {
+  name: string;
+  price: string;
+  period: string;
+  features: string[];
+  buttonText: string;
+  buttonClass: string;
+  popular: boolean;
+  onClick: () => void | Promise<void>;
+}
+
+const PricingSection: React.FC = () => {
   const { getToken, isSignedIn } = useAuth();
 
-  const handlePremiumClick = async () => {
+  const handlePremiumClick = async (): Promise<void> => {
     try {
       const token = isSignedIn ? await getToken() : null;
       const checkout = await stripeService.createCheckoutSession(
         "premium_monthly",
-        token
+        token || undefined
       );
-      if (checkout.checkout_url) {
-        window.location.href = checkout.checkout_url;
+      if (checkout.url) {
+        window.location.href = checkout.url;
       }
     } catch (error) {
       console.error("Failed to create checkout session:", error);
@@ -22,23 +33,14 @@ const PricingSection = () => {
     }
   };
 
-  const handleProClick = async () => {
-    try {
-      const token = isSignedIn ? await getToken() : null;
-      const checkout = await stripeService.createCheckoutSession(
-        "premium_yearly",
-        token
-      );
-      if (checkout.checkout_url) {
-        window.location.href = checkout.checkout_url;
-      }
-    } catch (error) {
-      console.error("Failed to create checkout session:", error);
-      alert("Failed to start checkout. Please try again.");
+  const handleScrollToSimulator = (): void => {
+    const simulatorElement = document.getElementById("simulator");
+    if (simulatorElement) {
+      simulatorElement.scrollIntoView({ behavior: "smooth" });
     }
   };
 
-  const plans = [
+  const plans: Plan[] = [
     {
       name: "Free",
       price: "$0",
@@ -52,10 +54,7 @@ const PricingSection = () => {
       buttonText: "Get Started",
       buttonClass: "bg-gray-600 hover:bg-gray-700 text-white",
       popular: false,
-      onClick: () =>
-        document
-          .getElementById("simulator")
-          .scrollIntoView({ behavior: "smooth" }),
+      onClick: handleScrollToSimulator,
     },
     {
       name: "Premium",
@@ -105,6 +104,13 @@ const PricingSection = () => {
                 plan.popular ? "border-4 border-purple-500 scale-105" : ""
               }`}
             >
+              {plan.popular && (
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <span className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-4 py-2 rounded-full text-sm font-semibold">
+                    Most Popular
+                  </span>
+                </div>
+              )}
 
               <div className="text-center mb-8">
                 <h3 className="text-2xl font-bold text-gray-800 mb-4">

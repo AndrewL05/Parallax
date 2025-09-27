@@ -1,7 +1,14 @@
 import React from "react";
 import { motion } from "framer-motion";
 
-const HeroSection = () => {
+const HeroSection: React.FC = () => {
+  const handleScrollToSimulator = (): void => {
+    const simulatorElement = document.getElementById("simulator");
+    if (simulatorElement) {
+      simulatorElement.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-purple-50/30 to-blue-50/50 overflow-hidden">
       {/* Background Effects */}
@@ -65,11 +72,7 @@ const HeroSection = () => {
                   "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
               }}
               whileTap={{ scale: 0.95 }}
-              onClick={() =>
-                document
-                  .getElementById("simulator")
-                  .scrollIntoView({ behavior: "smooth" })
-              }
+              onClick={handleScrollToSimulator}
             >
               Start Your Simulation
             </motion.button>

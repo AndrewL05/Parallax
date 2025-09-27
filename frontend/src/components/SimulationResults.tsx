@@ -1,8 +1,23 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import TimelineChart from './TimelineChart';
+import type { SimulationResult } from '../types/api';
 
-const SimulationResults = ({ simulation, onNewSimulation }) => {
+interface SimulationResultsProps {
+  simulation: SimulationResult;
+  onNewSimulation: () => void;
+}
+
+const SimulationResults: React.FC<SimulationResultsProps> = ({ simulation, onNewSimulation }) => {
+  const getLastTimelinePoint = (timeline: typeof simulation.choice_a_timeline) => {
+    return timeline[timeline.length - 1];
+  };
+
+  const calculateAverageHappiness = (timeline: typeof simulation.choice_a_timeline): number => {
+    const sum = timeline.reduce((acc, point) => acc + point.happiness_score, 0);
+    return sum / timeline.length;
+  };
+
   return (
     <motion.div
       className="max-w-7xl mx-auto"
@@ -14,38 +29,38 @@ const SimulationResults = ({ simulation, onNewSimulation }) => {
         <h2 className="text-4xl font-bold text-gray-800 mb-4">Your Life Simulation Results</h2>
         <p className="text-gray-600 text-lg">Compare how your two life paths might unfold over the next 10 years</p>
       </div>
-      
+
       {/* Timeline Visualizations */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 mb-8">
-        <motion.div 
+        <motion.div
           className="bg-white rounded-2xl shadow-xl p-6"
           initial={{ opacity: 0, x: -50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <TimelineChart 
-            data={simulation.choice_a_timeline} 
+          <TimelineChart
+            data={simulation.choice_a_timeline}
             title="Path A Timeline"
             color="#2563EB"
           />
         </motion.div>
-        
-        <motion.div 
+
+        <motion.div
           className="bg-white rounded-2xl shadow-xl p-6"
           initial={{ opacity: 0, x: 50 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5, delay: 0.4 }}
         >
-          <TimelineChart 
-            data={simulation.choice_b_timeline} 
+          <TimelineChart
+            data={simulation.choice_b_timeline}
             title="Path B Timeline"
             color="#059669"
           />
         </motion.div>
       </div>
-      
+
       {/* Summary */}
-      <motion.div 
+      <motion.div
         className="bg-white rounded-2xl shadow-xl p-8 mb-8"
         initial={{ opacity: 0, y: 50 }}
         animate={{ opacity: 1, y: 0 }}
@@ -54,11 +69,11 @@ const SimulationResults = ({ simulation, onNewSimulation }) => {
         <h3 className="text-2xl font-bold text-gray-800 mb-4">AI Analysis & Insights</h3>
         <p className="text-gray-700 leading-relaxed text-lg">{simulation.summary}</p>
       </motion.div>
-      
+
       {/* Quick Stats Comparison */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {/* Path A Stats */}
-        <motion.div 
+        <motion.div
           className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -68,21 +83,27 @@ const SimulationResults = ({ simulation, onNewSimulation }) => {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-blue-700">10-Year Salary:</span>
-              <span className="font-semibold">${simulation.choice_a_timeline[simulation.choice_a_timeline.length - 1]?.salary?.toLocaleString()}</span>
+              <span className="font-semibold">
+                ${getLastTimelinePoint(simulation.choice_a_timeline)?.salary?.toLocaleString() || 'N/A'}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-blue-700">Avg Happiness:</span>
-              <span className="font-semibold">{(simulation.choice_a_timeline.reduce((acc, p) => acc + p.happiness_score, 0) / simulation.choice_a_timeline.length).toFixed(1)}/10</span>
+              <span className="font-semibold">
+                {calculateAverageHappiness(simulation.choice_a_timeline).toFixed(1)}/10
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-blue-700">Final Role:</span>
-              <span className="font-semibold">{simulation.choice_a_timeline[simulation.choice_a_timeline.length - 1]?.career_title}</span>
+              <span className="font-semibold">
+                {getLastTimelinePoint(simulation.choice_a_timeline)?.career_title || 'N/A'}
+              </span>
             </div>
           </div>
         </motion.div>
-        
+
         {/* Path B Stats */}
-        <motion.div 
+        <motion.div
           className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
@@ -92,20 +113,26 @@ const SimulationResults = ({ simulation, onNewSimulation }) => {
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-green-700">10-Year Salary:</span>
-              <span className="font-semibold">${simulation.choice_b_timeline[simulation.choice_b_timeline.length - 1]?.salary?.toLocaleString()}</span>
+              <span className="font-semibold">
+                ${getLastTimelinePoint(simulation.choice_b_timeline)?.salary?.toLocaleString() || 'N/A'}
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-green-700">Avg Happiness:</span>
-              <span className="font-semibold">{(simulation.choice_b_timeline.reduce((acc, p) => acc + p.happiness_score, 0) / simulation.choice_b_timeline.length).toFixed(1)}/10</span>
+              <span className="font-semibold">
+                {calculateAverageHappiness(simulation.choice_b_timeline).toFixed(1)}/10
+              </span>
             </div>
             <div className="flex justify-between">
               <span className="text-green-700">Final Role:</span>
-              <span className="font-semibold">{simulation.choice_b_timeline[simulation.choice_b_timeline.length - 1]?.career_title}</span>
+              <span className="font-semibold">
+                {getLastTimelinePoint(simulation.choice_b_timeline)?.career_title || 'N/A'}
+              </span>
             </div>
           </div>
         </motion.div>
       </div>
-      
+
       <div className="text-center">
         <motion.button
           onClick={onNewSimulation}
