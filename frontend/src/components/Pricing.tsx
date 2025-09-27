@@ -82,6 +82,7 @@ const PricingSection: React.FC = () => {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
           transition={{ duration: 0.8 }}
           className="text-center mb-16"
         >
@@ -99,6 +100,7 @@ const PricingSection: React.FC = () => {
               key={index}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
               transition={{ duration: 0.6, delay: index * 0.2 }}
               className={`bg-white rounded-2xl shadow-xl p-8 relative ${
                 plan.popular ? "border-4 border-purple-500 scale-105" : ""

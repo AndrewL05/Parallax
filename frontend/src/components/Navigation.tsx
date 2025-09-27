@@ -7,6 +7,17 @@ interface NavigationProps {
 }
 
 const Navigation: React.FC<NavigationProps> = ({ onLogoClick }) => {
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+        inline: 'nearest'
+      });
+    }
+  };
+
   return (
     <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-md shadow-lg z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -22,9 +33,24 @@ const Navigation: React.FC<NavigationProps> = ({ onLogoClick }) => {
           </motion.div>
 
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#features" className="text-gray-700 hover:text-purple-600 font-medium transition-colors">Features</a>
-            <a href="#how-it-works" className="text-gray-700 hover:text-purple-600 font-medium transition-colors">How It Works</a>
-            <a href="#pricing" className="text-gray-700 hover:text-purple-600 font-medium transition-colors">Pricing</a>
+            <button
+              onClick={() => scrollToSection('features')}
+              className="text-gray-700 hover:text-purple-600 font-medium transition-colors"
+            >
+              Features
+            </button>
+            <button
+              onClick={() => scrollToSection('how-it-works')}
+              className="text-gray-700 hover:text-purple-600 font-medium transition-colors"
+            >
+              How It Works
+            </button>
+            <button
+              onClick={() => scrollToSection('pricing')}
+              className="text-gray-700 hover:text-purple-600 font-medium transition-colors"
+            >
+              Pricing
+            </button>
           </div>
 
           <div className="flex items-center space-x-4">

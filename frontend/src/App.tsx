@@ -90,6 +90,7 @@ const AppContent: React.FC = () => {
                       className="text-5xl md:text-6xl font-bold text-gray-800 mb-6"
                       initial={{ opacity: 0, y: -30 }}
                       whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
                       transition={{ duration: 0.8 }}
                     >
                       Try It Now
@@ -98,6 +99,7 @@ const AppContent: React.FC = () => {
                       className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed"
                       initial={{ opacity: 0, y: 30 }}
                       whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
                       transition={{ duration: 0.8, delay: 0.2 }}
                     >
                       Start exploring your future possibilities with our
