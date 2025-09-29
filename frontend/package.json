@@ -2,6 +2,7 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "dependencies": {
     "@clerk/clerk-react": "^5.32.0",
     "@stripe/stripe-js": "^7.3.1",

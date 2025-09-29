@@ -73,7 +73,7 @@ Return your response as valid JSON only:
             response = await asyncio.wait_for(
                 asyncio.to_thread(
                     ai_client.chat.completions.create,
-                    model="deepseek/deepseek-r1:free",
+                    model="openai/gpt-3.5-turbo",
                     messages=[
                         {"role": "system", "content": "You are a professional life advisor and data analyst specializing in career and life path projections."},
                         {"role": "user", "content": prompt}
