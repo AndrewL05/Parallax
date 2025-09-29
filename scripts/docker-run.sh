@@ -122,5 +122,9 @@ if [ "$ACTION" = "up" ]; then
     print_status "API Documentation: http://localhost:8000/docs"
 
     print_status "Container status:"
-    docker-compose ps
+    if [ "$ENVIRONMENT" = "production" ] || [ "$ENVIRONMENT" = "prod" ]; then
+        docker-compose -f docker-compose.prod.yml ps
+    else
+        docker-compose ps
+    fi
 fi
