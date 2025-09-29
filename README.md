@@ -27,6 +27,11 @@ A life simulation application that uses AI to help users compare different life 
 - MongoDB
 - Stripe
 
+### DevOps & Infrastructure
+
+- Docker
+- nginx
+
 ## Quick Start
 
 ### Prerequisites
