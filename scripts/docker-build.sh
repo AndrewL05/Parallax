@@ -63,4 +63,4 @@ print_status "✅ Build completed successfully!"
 
 # Show built images
 print_status "Built images:"
-docker images | grep parallax
+docker images | grep parallax || true
