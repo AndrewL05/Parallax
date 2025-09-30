@@ -27,14 +27,16 @@ async def get_subscription_status(
     current_user: dict = Depends(get_current_user)
 ):
     """Get detailed subscription status and analytics"""
-    user_id = current_user.get("id")
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    user_id = current_user.get("clerk_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid user data")
+
     analytics = await SubscriptionService.get_subscription_analytics(user_id)
 
-    return {
-        "user_id": user_id,
-        "analytics": analytics,
-        "timestamp": datetime.utcnow()
-    }
+    return analytics
 
 @router.post("/simulations/advanced")
 @premium_feature("advanced_simulation")
@@ -57,7 +59,7 @@ async def create_advanced_simulation(
     }
 
     # This would integrate with enhanced AI service
-    logger.info(f"Creating advanced simulation for user {current_user.get('id')}")
+    logger.info(f"Creating advanced simulation for user {current_user.get('clerk_id')}")
 
     return {
         "message": "Advanced simulation created",
@@ -84,7 +86,7 @@ async def create_risk_assessment(
         }
     }
 
-    logger.info(f"Creating risk assessment for user {current_user.get('id')}")
+    logger.info(f"Creating risk assessment for user {current_user.get('clerk_id')}")
 
     return {
         "message": "Risk assessment created",
@@ -101,7 +103,7 @@ async def create_custom_scenario(
 ):
     """Create custom simulation scenarios (premium feature)"""
     db = await get_database()
-    user_id = current_user.get("id")
+    user_id = current_user.get("clerk_id")
 
     custom_scenario = {
         "id": f"custom_{datetime.utcnow().timestamp()}",
@@ -129,7 +131,7 @@ async def get_custom_scenarios(
 ):
     """Get user's custom scenarios"""
     db = await get_database()
-    user_id = current_user.get("id")
+    user_id = current_user.get("clerk_id")
 
     scenarios = await db.custom_scenarios.find({
         "$or": [
@@ -159,7 +161,7 @@ async def export_simulations(
         raise HTTPException(status_code=404, detail="User not found")
 
     # Check if user has access to this export format
-    subscription = await SubscriptionService.get_user_subscription(current_user.get("id"))
+    subscription = await SubscriptionService.get_user_subscription(current_user.get("clerk_id"))
     from models.subscription import TIER_LIMITS
     allowed_formats = TIER_LIMITS[subscription.tier].export_formats
 
@@ -293,7 +295,7 @@ async def submit_premium_feedback(
 
     feedback = {
         "id": f"feedback_{datetime.utcnow().timestamp()}",
-        "user_id": current_user.get("id"),
+        "user_id": current_user.get("clerk_id"),
         "type": "premium_feedback",
         "category": feedback_data.get("category"),
         "message": feedback_data.get("message"),

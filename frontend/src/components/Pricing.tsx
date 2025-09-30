@@ -46,10 +46,11 @@ const PricingSection: React.FC = () => {
       price: "$0",
       period: "forever",
       features: [
-        "3 life simulations per month",
-        "Basic timeline visualization",
-        "AI-powered insights",
+        "3 simulations per month",
+        "Basic simulations only",
+        "JSON export format",
         "Community support",
+        "1-month history retention",
       ],
       buttonText: "Get Started",
       buttonClass: "bg-gray-600 hover:bg-gray-700 text-white",
@@ -61,12 +62,14 @@ const PricingSection: React.FC = () => {
       price: "$4.99",
       period: "per month",
       features: [
-        "Unlimited life simulations",
-        "Advanced visualizations",
-        "Detailed AI analysis",
-        "Export & share results",
-        "Priority support",
-        "Early access to new features",
+        "Unlimited simulations",
+        "Advanced AI analysis with risk assessment",
+        "Custom scenarios",
+        "AI chatbot access",
+        "Export in JSON, PDF, CSV, Excel",
+        "Priority support (2-hour response)",
+        "Market condition analysis",
+        "12-month history retention",
       ],
       buttonText: "Start Premium",
       buttonClass:
@@ -94,7 +97,7 @@ const PricingSection: React.FC = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {plans.map((plan, index) => (
             <motion.div
               key={index}
