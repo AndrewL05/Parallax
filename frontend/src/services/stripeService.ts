@@ -29,7 +29,7 @@ class StripeService {
   }
 
   async pollPaymentStatus(sessionId: string, maxAttempts: number = 5): Promise<PaymentPollResult> {
-    const pollInterval = 2000; // 2 seconds
+    const pollInterval = 2000; 
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
       try {
