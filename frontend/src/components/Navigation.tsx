@@ -9,12 +9,10 @@ interface NavigationProps {
 
 const Navigation: React.FC<NavigationProps> = ({ onLogoClick, onSubscriptionClick }) => {
   const scrollToSection = (sectionId: string) => {
-    // First go to home page if not already there
     if (onLogoClick) {
       onLogoClick();
     }
 
-    // Then scroll to section after a small delay to allow page transition
     setTimeout(() => {
       const element = document.getElementById(sectionId);
       if (element) {
