@@ -11,6 +11,7 @@ import PricingSection from "./components/Pricing";
 import FooterSection from "./components/Footer";
 import LifeChoiceForm from "./components/LifeChoiceForm";
 import SimulationResults from "./components/SimulationResults";
+import SubscriptionStatus from "./components/SubscriptionStatus";
 
 import { useAuth } from "./hooks/useAuth";
 import { useSimulation } from "./hooks/useSimulation";
@@ -19,7 +20,7 @@ import type { SimulationFormData } from "./types/simulation";
 
 const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-type ViewType = "home" | "results";
+type ViewType = "home" | "results" | "subscription";
 
 const AppContent: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>("home");
@@ -64,7 +65,10 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen">
-      <Navigation onLogoClick={handleLogoClick} />
+      <Navigation
+        onLogoClick={handleLogoClick}
+        onSubscriptionClick={() => setCurrentView("subscription")}
+      />
 
       <main>
         <AnimatePresence mode="wait">
@@ -133,6 +137,21 @@ const AppContent: React.FC = () => {
                   simulation={simulation}
                   onNewSimulation={handleNewSimulation}
                 />
+              </div>
+            </motion.div>
+          )}
+
+          {currentView === "subscription" && (
+            <motion.div
+              key="subscription"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="pt-24 pb-20 bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100 min-h-screen"
+            >
+              <div className="container mx-auto px-4">
+                <SubscriptionStatus />
               </div>
             </motion.div>
           )}

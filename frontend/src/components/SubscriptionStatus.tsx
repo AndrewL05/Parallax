@@ -1,58 +1,34 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import { Card, CardHeader, CardTitle, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Crown, Clock, TrendingUp, CheckCircle, XCircle } from 'lucide-react';
-
-interface SubscriptionAnalytics {
-  subscription: {
-    tier: string;
-    status: string;
-    is_active: boolean;
-    is_trial: boolean;
-    days_until_expiry: number | null;
-    billing_period: string | null;
-  };
-  usage: {
-    simulations_used: number;
-    simulations_limit: number | null;
-    features_used: Record<string, number>;
-    period_start: string;
-    period_end: string;
-  };
-  features: {
-    advanced_simulations: boolean;
-    ai_chatbot_access: boolean;
-    export_formats: string[];
-    priority_support: boolean;
-    custom_scenarios: boolean;
-    historical_data_months: number;
-  };
-}
+import { premiumService, SubscriptionAnalytics } from '../services/premiumService';
+import { stripeService } from '../services/stripeService';
 
 const SubscriptionStatus: React.FC = () => {
+  const { getToken, isSignedIn } = useAuth();
   const [analytics, setAnalytics] = useState<SubscriptionAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchSubscriptionStatus();
-  }, []);
+    if (isSignedIn) {
+      fetchSubscriptionStatus();
+    }
+  }, [isSignedIn]);
 
   const fetchSubscriptionStatus = async () => {
     try {
-      const response = await fetch('/api/payments/subscription/status', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch subscription status');
+      const token = await getToken();
+      if (!token) {
+        throw new Error('Not authenticated');
       }
 
-      const data = await response.json();
+      const data = await premiumService.getSubscriptionStatus(token);
       setAnalytics(data);
+      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
@@ -62,22 +38,28 @@ const SubscriptionStatus: React.FC = () => {
 
   const startTrial = async () => {
     try {
-      const response = await fetch('/api/payments/subscription/trial', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('auth_token')}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ trial_days: 7 }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to start trial');
+      const token = await getToken();
+      if (!token) {
+        throw new Error('Not authenticated');
       }
 
-      await fetchSubscriptionStatus(); // Refresh data
+      await premiumService.startTrial(token, 7);
+      await fetchSubscriptionStatus();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start trial');
+    }
+  };
+
+  const handleUpgrade = async () => {
+    try {
+      const token = await getToken();
+      const checkout = await stripeService.createCheckoutSession('premium_monthly', token || undefined);
+      if (checkout.url) {
+        window.location.href = checkout.url;
+      }
+    } catch (error) {
+      console.error('Failed to create checkout session:', error);
+      alert('Failed to start checkout. Please try again.');
     }
   };
 
@@ -225,7 +207,7 @@ const SubscriptionStatus: React.FC = () => {
                     <Button onClick={startTrial} className="w-full" variant="outline">
                       Start 7-Day Trial
                     </Button>
-                    <Button className="w-full">
+                    <Button onClick={handleUpgrade} className="w-full" variant="primary">
                       Upgrade to Premium
                     </Button>
                   </>

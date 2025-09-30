@@ -16,7 +16,12 @@ interface PaymentPollResult {
 class StripeService {
   async createCheckoutSession(packageType: string, token?: string): Promise<{ url: string; session_id: string }> {
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-    return apiService.post<{ url: string; session_id: string }>(`/payments/checkout?package=${packageType}`, {}, headers);
+    const response = await apiService.post<{ checkout_url: string; session_id: string }>(`/payments/checkout?package=${packageType}`, {}, headers);
+    // Transform response to match expected format
+    return {
+      url: response.checkout_url,
+      session_id: response.session_id
+    };
   }
 
   async getPaymentStatus(sessionId: string): Promise<PaymentStatus> {

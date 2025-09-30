@@ -4,18 +4,27 @@ import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-reac
 
 interface NavigationProps {
   onLogoClick: () => void;
+  onSubscriptionClick?: () => void;
 }
 
-const Navigation: React.FC<NavigationProps> = ({ onLogoClick }) => {
+const Navigation: React.FC<NavigationProps> = ({ onLogoClick, onSubscriptionClick }) => {
   const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-        inline: 'nearest'
-      });
+    // First go to home page if not already there
+    if (onLogoClick) {
+      onLogoClick();
     }
+
+    // Then scroll to section after a small delay to allow page transition
+    setTimeout(() => {
+      const element = document.getElementById(sectionId);
+      if (element) {
+        element.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+          inline: 'nearest'
+        });
+      }
+    }, 100);
   };
 
   return (
@@ -51,6 +60,14 @@ const Navigation: React.FC<NavigationProps> = ({ onLogoClick }) => {
             >
               Pricing
             </button>
+            <SignedIn>
+              <button
+                onClick={onSubscriptionClick}
+                className="text-gray-700 hover:text-purple-600 font-medium transition-colors"
+              >
+                My Subscription
+              </button>
+            </SignedIn>
           </div>
 
           <div className="flex items-center space-x-4">

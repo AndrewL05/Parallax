@@ -46,13 +46,13 @@ async def create_checkout_session(
             cancel_url=f"{origin_url}/pricing",
             metadata={
                 "package": package,
-                "user_id": str(current_user.get("id")) if current_user else "anonymous"
+                "user_id": str(current_user.get("clerk_id")) if current_user else "anonymous"
             }
         )
-        
+
         # Save transaction record
         transaction = PaymentTransaction(
-            user_id=str(current_user.get("id")) if current_user else None,
+            user_id=str(current_user.get("clerk_id")) if current_user else None,
             session_id=session_data["session_id"],
             amount=package_info["amount"],
             payment_status="initiated",
@@ -158,7 +158,10 @@ async def cancel_subscription(
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
 
-    user_id = current_user.get("id")
+    user_id = current_user.get("clerk_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid user data")
+
     success = await SubscriptionService.cancel_subscription(user_id, immediate)
 
     if not success:
@@ -176,7 +179,10 @@ async def get_subscription_status(current_user: dict = Depends(get_current_user)
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
 
-    user_id = current_user.get("id")
+    user_id = current_user.get("clerk_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid user data")
+
     analytics = await SubscriptionService.get_subscription_analytics(user_id)
 
     return analytics
@@ -190,7 +196,10 @@ async def start_trial(
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
 
-    user_id = current_user.get("id")
+    user_id = current_user.get("clerk_id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid user data")
+
     subscription = await SubscriptionService.get_user_subscription(user_id)
 
     # Check if user is eligible for trial
