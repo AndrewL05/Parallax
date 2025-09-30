@@ -15,8 +15,9 @@ load_dotenv(ROOT_DIR / '.env')
 
 # Import routes
 from routes.auth import router as auth_router
-from routes.simulation import router as simulation_router  
+from routes.simulation import router as simulation_router
 from routes.payments import router as payments_router
+from routes.premium import router as premium_router
 from database import init_database, close_database
 
 # Initialize FastAPI app
@@ -64,6 +65,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 app.include_router(auth_router, prefix="/api")
 app.include_router(simulation_router, prefix="/api")
 app.include_router(payments_router, prefix="/api")
+app.include_router(premium_router, prefix="/api")
 
 @app.get("/api/")
 async def root():
@@ -90,7 +92,6 @@ async def shutdown_event():
     except Exception as e:
         logger.error(f"Shutdown error: {e}")
 
-# Health check endpoint
 @app.get("/health")
 async def health_check():
     """System health check"""

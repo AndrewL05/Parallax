@@ -9,39 +9,24 @@ from models.simulation import SimulationRequest, Simulation, SimulationResult, T
 from database import get_database
 from auth import get_current_user
 from services.ai_service import generate_life_simulation
+from services.subscription_service import SubscriptionService
+from middleware.premium_auth import require_simulation_access, usage_limited
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["simulation"])
 
 @router.post("/simulate", response_model=SimulationResult)
+@usage_limited("simulation")
 async def create_life_simulation(
     request: SimulationRequest,
-    current_user: Optional[dict] = Depends(get_current_user)
+    current_user: Optional[dict] = Depends(require_simulation_access)
 ):
     """Generate AI-powered life simulation comparing two choices"""
     logger.info(f"🔍 Received simulation request: {request}")
     logger.info(f"🔍 Request dict: {request.dict()}")
-    
+
     db = await get_database()
     user_id = current_user.get("id") if current_user else None
-    
-    # Check if user has premium access for advanced simulations
-    if current_user:
-        user_doc = await db.users.find_one({"clerk_id": current_user["clerk_id"]})
-        if user_doc and user_doc.get("subscription_tier") == "free":
-            # Check simulation count for free users (limit to 3 per month)
-            thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-            
-            simulation_count = await db.simulations.count_documents({
-                "user_id": str(user_doc.get("_id")),
-                "created_at": {"$gte": thirty_days_ago}
-            })
-            
-            if simulation_count >= 3:
-                raise HTTPException(
-                    status_code=403, 
-                    detail="Free tier limit reached. Upgrade to Premium for unlimited simulations."
-                )
     
     try:
         # Generate AI simulation
