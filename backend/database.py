@@ -4,7 +4,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# Database connection
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
@@ -16,7 +15,7 @@ async def get_database():
 async def init_database():
     """Initialize database with indexes"""
     try:
-        # Create indexes for better performance
+        # Indexes
         
         # Users collection indexes
         await db.users.create_index("clerk_id", unique=True)
@@ -34,7 +33,34 @@ async def init_database():
         await db.payment_transactions.create_index("user_id")
         await db.payment_transactions.create_index("created_at")
         await db.payment_transactions.create_index("payment_status")
-        
+
+        # Subscriptions collection indexes
+        await db.subscriptions.create_index("user_id")
+        await db.subscriptions.create_index("id", unique=True)
+        await db.subscriptions.create_index("stripe_subscription_id")
+        await db.subscriptions.create_index("status")
+        await db.subscriptions.create_index([("user_id", 1), ("created_at", -1)])
+        await db.subscriptions.create_index("current_period_end")
+
+        # Usage tracking collection indexes
+        await db.usage_tracking.create_index("user_id")
+        await db.usage_tracking.create_index("subscription_id")
+        await db.usage_tracking.create_index("id", unique=True)
+        await db.usage_tracking.create_index([("user_id", 1), ("period_start", 1), ("period_end", 1)])
+
+        # Custom scenarios collection indexes
+        await db.custom_scenarios.create_index("user_id")
+        await db.custom_scenarios.create_index("id", unique=True)
+        await db.custom_scenarios.create_index("is_public")
+        await db.custom_scenarios.create_index("created_at")
+
+        # Feedback collection indexes
+        await db.feedback.create_index("user_id")
+        await db.feedback.create_index("id", unique=True)
+        await db.feedback.create_index("type")
+        await db.feedback.create_index("priority")
+        await db.feedback.create_index("created_at")
+
         logger.info("Database indexes created successfully")
         
     except Exception as e:

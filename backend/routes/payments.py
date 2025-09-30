@@ -4,9 +4,11 @@ import logging
 from datetime import datetime
 
 from models.payment import PaymentTransaction, PaymentStatus, CheckoutRequest
+from models.subscription import BillingPeriod
 from database import get_database
 from auth import get_current_user
 from services.stripe_service import create_stripe_checkout, get_stripe_payment_status
+from services.subscription_service import SubscriptionService
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/payments", tags=["payments"])
@@ -94,6 +96,19 @@ async def get_payment_status(session_id: str):
         if status_response["payment_status"] == "paid":
             transaction = await db.payment_transactions.find_one({"session_id": session_id})
             if transaction and transaction.get("user_id"):
+                # Determine billing period from package
+                billing_period = BillingPeriod.YEARLY if "yearly" in transaction.get("package_type", "") else BillingPeriod.MONTHLY
+
+                # Create premium subscription using new service
+                await SubscriptionService.upgrade_to_premium(
+                    user_id=transaction["user_id"],
+                    billing_period=billing_period,
+                    stripe_subscription_id=session_id,  # In production, use actual Stripe subscription ID
+                    stripe_customer_id=status_response.get("customer", ""),
+                    trial_days=None  # No trial for direct payments
+                )
+
+                # Update legacy user record for backward compatibility
                 await db.users.update_one(
                     {"_id": transaction["user_id"]},
                     {"$set": {"subscription_tier": "premium", "upgraded_at": datetime.utcnow()}}
@@ -133,3 +148,83 @@ async def get_user_transactions(current_user: dict = Depends(get_current_user)):
             transaction["_id"] = str(transaction["_id"])
     
     return transactions
+
+@router.post("/subscription/cancel")
+async def cancel_subscription(
+    immediate: bool = False,
+    current_user: dict = Depends(get_current_user)
+):
+    """Cancel user's premium subscription"""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    user_id = current_user.get("id")
+    success = await SubscriptionService.cancel_subscription(user_id, immediate)
+
+    if not success:
+        raise HTTPException(status_code=404, detail="No active subscription found")
+
+    return {
+        "message": "Subscription cancelled successfully",
+        "immediate": immediate,
+        "cancelled_at": datetime.utcnow()
+    }
+
+@router.get("/subscription/status")
+async def get_subscription_status(current_user: dict = Depends(get_current_user)):
+    """Get detailed subscription status"""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    user_id = current_user.get("id")
+    analytics = await SubscriptionService.get_subscription_analytics(user_id)
+
+    return analytics
+
+@router.post("/subscription/trial")
+async def start_trial(
+    trial_days: int = 7,
+    current_user: dict = Depends(get_current_user)
+):
+    """Start a premium trial for eligible users"""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    user_id = current_user.get("id")
+    subscription = await SubscriptionService.get_user_subscription(user_id)
+
+    # Check if user is eligible for trial
+    if subscription.tier != "free":
+        raise HTTPException(
+            status_code=400,
+            detail="Trial only available for free tier users"
+        )
+
+    # Check if user has already had a trial
+    db = await get_database()
+    existing_trial = await db.subscriptions.find_one({
+        "user_id": user_id,
+        "trial_end": {"$exists": True}
+    })
+
+    if existing_trial:
+        raise HTTPException(
+            status_code=400,
+            detail="Trial already used for this account"
+        )
+
+    # Create trial subscription
+    trial_subscription = await SubscriptionService.upgrade_to_premium(
+        user_id=user_id,
+        billing_period=BillingPeriod.MONTHLY,
+        stripe_subscription_id=f"trial_{datetime.utcnow().timestamp()}",
+        stripe_customer_id="",
+        trial_days=trial_days
+    )
+
+    return {
+        "message": "Trial started successfully",
+        "trial_days": trial_days,
+        "trial_end": trial_subscription.trial_end,
+        "subscription_id": trial_subscription.id
+    }
