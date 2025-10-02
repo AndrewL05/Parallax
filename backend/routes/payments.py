@@ -15,8 +15,7 @@ router = APIRouter(prefix="/payments", tags=["payments"])
 
 # Define packages (server-side only for security)
 PACKAGES = {
-    "premium_monthly": {"amount": 9.99, "name": "Premium Monthly"},
-    "premium_yearly": {"amount": 99.99, "name": "Premium Yearly"}
+    "premium_monthly": {"amount": 4.99, "name": "Premium Monthly"}
 }
 
 @router.post("/checkout")
@@ -43,7 +42,7 @@ async def create_checkout_session(
             amount=package_info["amount"],
             currency="usd",
             success_url=f"{origin_url}/success?session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{origin_url}/pricing",
+            cancel_url=f"{origin_url}",
             metadata={
                 "package": package,
                 "user_id": str(current_user.get("clerk_id")) if current_user else "anonymous"
