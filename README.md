@@ -7,7 +7,7 @@ A life simulation application that uses AI to help users compare different life 
 - **AI-Powered Life Simulations**: Generate realistic 10-year projections for major life decisions
 - **Interactive Timeline Visualization**: Explore simulation results with D3-powered data visualizations
 - **User Authentication**: Secure login and profile management with Clerk
-- **Freemium Model**: Free tier with 3 simulations per month, premium tier with unlimited access
+- **Freemium Model**: Free tier with 3 simulations per week, premium tier with unlimited access
 - **Payment Processing**: Secure payments handled through Stripe integration
 - **Responsive Design**: Modern React interface with smooth animations
 
