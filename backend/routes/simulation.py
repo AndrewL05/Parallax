@@ -29,10 +29,8 @@ async def create_life_simulation(
     user_id = current_user.get("id") if current_user else None
     
     try:
-        # Generate AI simulation
         ai_data = await generate_life_simulation(request)
         
-        # Create simulation object
         simulation = Simulation(
             user_id=str(user_id) if user_id else None,
             choice_a=request.choice_a,
@@ -43,14 +41,14 @@ async def create_life_simulation(
             summary=ai_data.get("summary", "Simulation completed successfully.")
         )
         
-        # Save to database
+        
         simulation_dict = simulation.dict()
         result = await db.simulations.insert_one(simulation_dict)
         simulation_dict["_id"] = str(result.inserted_id)
         
         logger.info(f"Simulation created with ID: {simulation.id}")
         
-        # Return result
+        
         return SimulationResult(
             id=simulation.id,
             choice_a_timeline=simulation.choice_a_timeline,
@@ -114,7 +112,7 @@ async def get_simulation(
         if not simulation.get("is_public", False):
             raise HTTPException(status_code=403, detail="Access denied")
     
-    # Convert ObjectId to string
+    
     if "_id" in simulation:
         simulation["_id"] = str(simulation["_id"])
     

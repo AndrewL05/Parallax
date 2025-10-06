@@ -9,8 +9,8 @@ class PaymentTransaction(BaseModel):
     session_id: str
     amount: float
     currency: str = "usd"
-    payment_status: str  # initiated, paid, failed, expired
-    package_type: Optional[str] = None  # premium_monthly, premium_yearly
+    payment_status: str  
+    package_type: Optional[str] = None  
     metadata: Optional[Dict[str, Any]] = {}
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -29,7 +29,7 @@ class PaymentStatus(BaseModel):
     metadata: Optional[Dict[str, Any]] = {}
 
 class CheckoutRequest(BaseModel):
-    package: str  # premium_monthly, premium_yearly
+    package: str  
     success_url: Optional[str] = None
     cancel_url: Optional[str] = None
     metadata: Optional[Dict[str, Any]] = {}

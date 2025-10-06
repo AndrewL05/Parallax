@@ -4,15 +4,11 @@ from datetime import datetime
 import uuid
 
 class LifeChoice(BaseModel):
-    model_config = {"extra": "ignore"}  # Ignore extra fields
-    
     title: str
     description: str
-    category: str  # career, location, education, relationship, etc.
+    category: str  
 
 class UserContext(BaseModel):
-    model_config = {"extra": "ignore"}  # Ignore extra fields
-    
     age: Optional[Union[str, int]] = None
     current_location: Optional[str] = None
     current_salary: Optional[Union[str, int, float]] = None
@@ -33,23 +29,14 @@ class UserContext(BaseModel):
         return v
 
 class SimulationRequest(BaseModel):
-    model_config = {"extra": "ignore"}  # Ignore extra fields
-    
     choice_a: LifeChoice
     choice_b: LifeChoice
-    user_context: Optional[UserContext] = None
-    
-    @field_validator('user_context', mode='before')
-    @classmethod
-    def validate_user_context(cls, v):
-        if v is None or v == {}:
-            return UserContext()
-        return v
+    user_context: Optional[UserContext] = UserContext()
 
 class TimelinePoint(BaseModel):
     year: int
     salary: Optional[float] = None
-    happiness_score: float  # 1-10 scale
+    happiness_score: float  
     major_event: Optional[str] = None
     location: Optional[str] = None
     career_title: Optional[str] = None
@@ -59,7 +46,7 @@ class Simulation(BaseModel):
     user_id: Optional[str] = None
     choice_a: LifeChoice
     choice_b: LifeChoice
-    user_context: Optional[UserContext] = None
+    user_context: UserContext
     choice_a_timeline: List[TimelinePoint]
     choice_b_timeline: List[TimelinePoint]
     summary: str
