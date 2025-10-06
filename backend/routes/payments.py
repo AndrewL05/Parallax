@@ -13,7 +13,7 @@ from services.subscription_service import SubscriptionService
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/payments", tags=["payments"])
 
-# Define packages (server-side only for security)
+# Define packages 
 PACKAGES = {
     "premium_monthly": {"amount": 4.99, "name": "Premium Monthly"}
 }
@@ -32,7 +32,6 @@ async def create_checkout_session(
     db = await get_database()
     
     try:
-        # Get origin from request headers or use default
         origin_url = str(request.base_url).rstrip('/')
         if origin_url.endswith('/api'):
             origin_url = origin_url[:-4]
@@ -104,7 +103,7 @@ async def get_payment_status(session_id: str):
                     billing_period=billing_period,
                     stripe_subscription_id=session_id,  # In production, use actual Stripe subscription ID
                     stripe_customer_id=status_response.get("customer", ""),
-                    trial_days=None  # No trial for direct payments
+                    trial_days=None  
                 )
 
                 # Update legacy user record for backward compatibility
@@ -116,7 +115,7 @@ async def get_payment_status(session_id: str):
         
         return {
             "payment_status": status_response["payment_status"],
-            "amount": status_response["amount_total"] / 100,  # Convert from cents
+            "amount": status_response["amount_total"] / 100,  
             "currency": status_response["currency"],
             "session_id": session_id
         }
@@ -141,7 +140,6 @@ async def get_user_transactions(current_user: dict = Depends(get_current_user)):
         {"user_id": str(user_doc["_id"])}
     ).sort("created_at", -1).to_list(50)
     
-    # Convert ObjectId to string
     for transaction in transactions:
         if "_id" in transaction:
             transaction["_id"] = str(transaction["_id"])

@@ -43,17 +43,17 @@ class MLPredictionInput(BaseModel):
 
     # Career context
     career_field: CareerField
-    position_level: str  # entry, mid, senior, lead, executive
+    position_level: str  
     location_type: LocationType
 
     # Choice-specific
     is_career_change: bool = False
     is_location_change: bool = False
-    industry_growth_rate: float = Field(0.03, ge=-0.2, le=0.5)  # Default 3% growth
+    industry_growth_rate: float = Field(0.03, ge=-0.2, le=0.5)  
 
     # Optional factors
     has_remote_option: bool = False
-    company_size: Optional[str] = None  # startup, small, medium, large, enterprise
+    company_size: Optional[str] = None  
 
     class Config:
         use_enum_values = True
@@ -63,18 +63,18 @@ class CareerMetrics(BaseModel):
     salary: float = Field(..., ge=0)
     promotion_probability: float = Field(..., ge=0, le=1)
     position_title: str
-    career_stability: float = Field(..., ge=0, le=10)  # 1-10 scale
-    job_satisfaction: float = Field(..., ge=0, le=10)  # 1-10 scale
-    work_life_balance: float = Field(..., ge=0, le=10)  # 1-10 scale
-    stress_level: float = Field(..., ge=0, le=10)  # 1-10 scale (10 = highest stress)
+    career_stability: float = Field(..., ge=0, le=10)  
+    job_satisfaction: float = Field(..., ge=0, le=10)  
+    work_life_balance: float = Field(..., ge=0, le=10)  
+    stress_level: float = Field(..., ge=0, le=10)  
 
 class LifeQualityMetrics(BaseModel):
     """Life quality predictions"""
-    happiness_score: float = Field(..., ge=0, le=10)  # 1-10 scale
-    financial_security: float = Field(..., ge=0, le=10)  # 1-10 scale
-    health_score: float = Field(..., ge=0, le=10)  # 1-10 scale
-    relationship_quality: float = Field(..., ge=0, le=10)  # 1-10 scale
-    personal_growth: float = Field(..., ge=0, le=10)  # 1-10 scale
+    happiness_score: float = Field(..., ge=0, le=10)  
+    financial_security: float = Field(..., ge=0, le=10)  
+    health_score: float = Field(..., ge=0, le=10)  
+    relationship_quality: float = Field(..., ge=0, le=10)  
+    personal_growth: float = Field(..., ge=0, le=10)  
 
 class YearlyPrediction(BaseModel):
     """Predictions for a single year"""
@@ -100,7 +100,7 @@ class MLPredictionResult(BaseModel):
 class DatasetMetadata(BaseModel):
     """Metadata for ML training datasets"""
     dataset_name: str
-    source: str  # kaggle, custom, etc.
+    source: str  
     version: str
     download_url: Optional[str] = None
     local_path: Optional[str] = None
@@ -116,7 +116,7 @@ class DatasetMetadata(BaseModel):
 class ModelMetrics(BaseModel):
     """ML model performance metrics"""
     model_name: str
-    model_type: str  # regression, classification, ensemble
+    model_type: str  
     accuracy: Optional[float] = None
     rmse: Optional[float] = None
     mae: Optional[float] = None

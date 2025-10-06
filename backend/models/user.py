@@ -11,7 +11,7 @@ class User(BaseModel):
     last_name: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    subscription_tier: str = "free"  # free, premium
+    subscription_tier: str = "free"     
     last_login: Optional[datetime] = None
     is_active: bool = True
 

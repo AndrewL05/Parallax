@@ -15,13 +15,10 @@ async def verify_clerk_token(authorization: str):
     token = authorization.split(" ")[1]
     
     try:
-        # Get Clerk JWKS
         jwks_url = os.environ.get('CLERK_JWKS_URL')
         if not jwks_url:
             raise HTTPException(status_code=500, detail="Clerk JWKS URL not configured")
         
-        # For development, we'll decode without verification
-        # In production, you should verify the signature properly
         decoded = jwt.decode(token, options={"verify_signature": False})
         clerk_id = decoded.get('sub')
         

@@ -15,26 +15,26 @@ async def get_database():
 async def init_database():
     """Initialize database with indexes"""
     try:
-        # Indexes
         
+        # Indexes
         # Users collection indexes
         await db.users.create_index("clerk_id", unique=True)
         await db.users.create_index("email")
         await db.users.create_index("created_at")
         
-        # Simulations collection indexes
+        # Simulations
         await db.simulations.create_index("user_id")
         await db.simulations.create_index("created_at")
         await db.simulations.create_index("id", unique=True)
         await db.simulations.create_index([("user_id", 1), ("created_at", -1)])
         
-        # Payment transactions collection indexes
+        # Payment transactions
         await db.payment_transactions.create_index("session_id", unique=True)
         await db.payment_transactions.create_index("user_id")
         await db.payment_transactions.create_index("created_at")
         await db.payment_transactions.create_index("payment_status")
 
-        # Subscriptions collection indexes
+        # Subscriptions
         await db.subscriptions.create_index("user_id")
         await db.subscriptions.create_index("id", unique=True)
         await db.subscriptions.create_index("stripe_subscription_id")
@@ -42,19 +42,19 @@ async def init_database():
         await db.subscriptions.create_index([("user_id", 1), ("created_at", -1)])
         await db.subscriptions.create_index("current_period_end")
 
-        # Usage tracking collection indexes
+        # Usage tracking
         await db.usage_tracking.create_index("user_id")
         await db.usage_tracking.create_index("subscription_id")
         await db.usage_tracking.create_index("id", unique=True)
         await db.usage_tracking.create_index([("user_id", 1), ("period_start", 1), ("period_end", 1)])
 
-        # Custom scenarios collection indexes
+        # Custom scenarios
         await db.custom_scenarios.create_index("user_id")
         await db.custom_scenarios.create_index("id", unique=True)
         await db.custom_scenarios.create_index("is_public")
         await db.custom_scenarios.create_index("created_at")
 
-        # Feedback collection indexes
+        # Feedback
         await db.feedback.create_index("user_id")
         await db.feedback.create_index("id", unique=True)
         await db.feedback.create_index("type")

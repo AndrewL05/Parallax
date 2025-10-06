@@ -25,9 +25,9 @@ def get_openai_client():
                 base_url="https://openrouter.ai/api/v1",
                 api_key=openrouter_api_key,
             )
-            logger.info("✅ OpenAI client initialized successfully")
+            logger.info("OpenAI client initialized successfully")
         else:
-            logger.warning("❌ OPENROUTER_API_KEY not set - AI service will use fallback data")
+            logger.warning("OPENROUTER_API_KEY not set - AI service will use fallback data")
     return client
 
 async def generate_life_simulation(request: SimulationRequest) -> Dict[str, Any]:
@@ -78,11 +78,11 @@ Return your response as valid JSON only:
                         {"role": "user", "content": prompt}
                     ],
                     temperature=0.7,
-                    max_tokens=3000  # Increased to 3000 for full response
+                    max_tokens=3000  
                 ),
-                timeout=45.0  # Increased timeout to 45 seconds
+                timeout=45.0  
             )
-            logger.info("✅ OpenRouter API call successful")
+            logger.info("OpenRouter API call successful")
         except asyncio.TimeoutError:
             logger.error("❌ OpenRouter API call timed out after 45 seconds")
             raise Exception("API call timed out")
@@ -111,19 +111,18 @@ Return your response as valid JSON only:
         
         try:
             ai_data = json.loads(ai_content.strip())
-            logger.info("✅ Successfully parsed AI response as direct JSON")
+            logger.info("Successfully parsed AI response as direct JSON")
         except json.JSONDecodeError as e:
             logger.debug(f"Direct JSON parsing failed: {e}")
             pass
         
         if ai_data is None:
-            # More robust regex for markdown code blocks
             json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', ai_content, re.DOTALL)
             if json_match:
                 try:
                     json_str = json_match.group(1).strip()
                     ai_data = json.loads(json_str)
-                    logger.info("✅ Successfully parsed AI response from markdown code block")
+                    logger.info("Successfully parsed AI response from markdown code block")
                 except json.JSONDecodeError as e:
                     logger.warning(f"Markdown JSON parsing failed: {e}")
                     pass
@@ -133,7 +132,7 @@ Return your response as valid JSON only:
             if json_match:
                 try:
                     ai_data = json.loads(json_match.group())
-                    logger.info("✅ Successfully parsed AI response from JSON pattern")
+                    logger.info("Successfully parsed AI response from JSON pattern")
                 except json.JSONDecodeError as e:
                     logger.warning(f"JSON pattern parsing failed: {e}")
                     pass
