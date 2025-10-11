@@ -5,7 +5,6 @@ from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
-# Initialize Stripe
 stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
 
 async def create_stripe_checkout(amount: float, currency: str, success_url: str, cancel_url: str, metadata: dict = None):
@@ -22,7 +21,7 @@ async def create_stripe_checkout(amount: float, currency: str, success_url: str,
                     'product_data': {
                         'name': 'Parallax Premium',
                     },
-                    'unit_amount': int(amount * 100),  # Convert to cents
+                    'unit_amount': int(amount * 100),  
                 },
                 'quantity': 1,
             }],
@@ -49,7 +48,7 @@ async def get_stripe_payment_status(session_id: str):
     try:
         session = stripe.checkout.Session.retrieve(session_id)
         
-        # Map Stripe payment status to our expected values
+        # Map Stripe payment status
         status_mapping = {
             "paid": "paid",
             "unpaid": "initiated",

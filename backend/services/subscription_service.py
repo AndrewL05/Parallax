@@ -25,12 +25,12 @@ class SubscriptionService:
         )
 
         if subscription_doc:
-            # Convert MongoDB ObjectId to string
+            
             if "_id" in subscription_doc:
                 subscription_doc["_id"] = str(subscription_doc["_id"])
             return Subscription(**subscription_doc)
 
-        # Create default free subscription if none exists
+        # create default free subscription if none exists
         return await SubscriptionService.create_free_subscription(user_id)
 
     @staticmethod
@@ -43,7 +43,7 @@ class SubscriptionService:
             tier=SubscriptionTier.FREE,
             status=SubscriptionStatus.ACTIVE,
             current_period_start=datetime.utcnow(),
-            current_period_end=datetime.utcnow() + timedelta(days=365)  # So free tier doesn't expire
+            current_period_end=datetime.utcnow() + timedelta(days=365)  # So the free tier doesn't expire
         )
 
         await db.subscriptions.insert_one(subscription.dict())
