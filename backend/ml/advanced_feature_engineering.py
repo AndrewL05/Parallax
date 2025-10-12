@@ -1,5 +1,5 @@
 """
-Advanced Feature Engineering for Parallax ML Pipeline
+Advanced Feature Engineering
 
 Creates:
 1. Career Growth Index - Composite score for career progression potential

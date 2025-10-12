@@ -9,21 +9,18 @@ import json
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load environment variables
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
-# Import routes
 from routes.auth import router as auth_router
 from routes.simulation import router as simulation_router
 from routes.payments import router as payments_router
 from routes.premium import router as premium_router
+from routes.ml_scenarios import router as ml_scenarios_router
 from database import init_database, close_database
 
-# Initialize FastAPI app
 app = FastAPI(title="Parallax Life Simulator API", version="1.0.0")
 
-# CORS middleware
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:5173", "http://127.0.0.1:5173"],
@@ -32,7 +29,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Debug middleware to log requests 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     if request.url.path == "/api/simulate":
@@ -44,14 +40,12 @@ async def log_requests(request: Request, call_next):
     response = await call_next(request)
     return response
 
-# Logging setup
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Custom validation error handler
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    logger.error(f"❌ Validation error on {request.url.path}: {exc.errors()}")
+    logger.error(f"Validation error on {request.url.path}: {exc.errors()}")
     
     return JSONResponse(
         status_code=422,
@@ -61,11 +55,11 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         }
     )
 
-# Include routers
 app.include_router(auth_router, prefix="/api")
 app.include_router(simulation_router, prefix="/api")
 app.include_router(payments_router, prefix="/api")
 app.include_router(premium_router, prefix="/api")
+app.include_router(ml_scenarios_router)
 
 @app.get("/api/")
 async def root():
@@ -79,6 +73,10 @@ async def startup_event():
     try:
         await init_database()
         logger.info("Database initialized successfully")
+
+        from routes.ml_scenarios import get_scenario_service
+        service = get_scenario_service()
+        logger.info("ML scenario service initialized successfully")
     except Exception as e:
         logger.error(f"Startup error: {e}")
 

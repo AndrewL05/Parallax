@@ -1,5 +1,5 @@
 """
-ML Pipeline for Production
+ML Pipeline
 
 Clean, reproducible pipeline for ML predictions.
 Integrates with FastAPI backend for real-time predictions.
@@ -53,7 +53,6 @@ class ParallaxMLPipeline:
     def _load_models(self):
         """Load trained models and preprocessing artifacts"""
         try:
-            # Load best model
             model_path = self.models_dir / "xgboost_tuned_salary.pkl"
             if model_path.exists():
                 self.model = joblib.load(model_path)
@@ -61,12 +60,10 @@ class ParallaxMLPipeline:
             else:
                 logger.warning(f"Model not found at {model_path}, using fallback")
 
-            # Load scaler if exists
             scaler_path = self.models_dir / "scaler.pkl"
             if scaler_path.exists():
                 self.scaler = joblib.load(scaler_path)
 
-            # Load encoders if exist
             encoders_path = self.models_dir / "encoders.pkl"
             if encoders_path.exists():
                 self.encoders = joblib.load(encoders_path)
@@ -115,16 +112,16 @@ class ParallaxMLPipeline:
         for key, value in education_map.items():
             if key in education_lower:
                 return value
-        return 3  # Default to bachelor's
+        return 3  
 
     def _encode_location(self, location: str) -> int:
         """Encode location type"""
         if location.lower() in ['new york', 'san francisco', 'london', 'tokyo']:
-            return 3  # Major city
+            return 3  
         elif location.lower() in ['los angeles', 'chicago', 'boston', 'seattle']:
-            return 2  # Large city
+            return 2  
         else:
-            return 1  # Other
+            return 1  
 
     def _encode_industry(self, industry: str) -> int:
         """Encode industry"""
@@ -212,9 +209,8 @@ class ParallaxMLPipeline:
             'doctorate': 100000
         }
 
-        # Get base
         education_lower = input_data.education_level.lower()
-        salary = 65000  # Default
+        salary = 65000  
 
         for key, value in base_salary.items():
             if key in education_lower:
@@ -224,13 +220,11 @@ class ParallaxMLPipeline:
         # Adjust for experience (3% per year)
         salary *= (1.03 ** input_data.years_experience)
 
-        # Adjust for location
         if input_data.location.lower() in ['new york', 'san francisco']:
             salary *= 1.3
         elif input_data.location.lower() in ['los angeles', 'chicago', 'boston', 'seattle']:
             salary *= 1.15
 
-        # Adjust for remote work
         if input_data.remote_work:
             salary *= 1.05
 
@@ -243,11 +237,11 @@ class ParallaxMLPipeline:
 
         # Growth rate based on experience
         if years_experience < 3:
-            growth_rate = 0.08  # 8% for early career
+            growth_rate = 0.08  
         elif years_experience < 7:
-            growth_rate = 0.06  # 6% for mid career
+            growth_rate = 0.06  
         else:
-            growth_rate = 0.04  # 4% for senior
+            growth_rate = 0.04  
 
         for year in range(years + 1):
             salary = current_salary * ((1 + growth_rate) ** year)
@@ -284,7 +278,6 @@ class ParallaxMLPipeline:
         else:
             base_happiness = 8.0 + min((salary - 150000) / 100000, 1.5)
 
-        # Adjust for career progression (slight decrease over time due to stress)
         time_adjustment = -0.05 * min(years_into_future, 5)
 
         return min(max(base_happiness + time_adjustment, 1.0), 10.0)
@@ -322,10 +315,8 @@ class ParallaxMLPipeline:
 def main():
     """Test the ML pipeline"""
 
-    # Initialize pipeline
     pipeline = ParallaxMLPipeline()
 
-    # Create test input
     test_input = PredictionInput(
         job_title="Software Engineer",
         years_experience=5,
@@ -336,10 +327,8 @@ def main():
         remote_work=True
     )
 
-    # Make prediction
     result = pipeline.predict_salary(test_input)
 
-    # Display results
     print("\n" + "="*80)
     print("PARALLAX ML PREDICTION")
     print("="*80)
@@ -348,7 +337,7 @@ def main():
     print(f"Salary Range: ${result.salary_range[0]:,.2f} - ${result.salary_range[1]:,.2f}")
 
     print(f"\nCareer Trajectory (10 years):")
-    for point in result.career_trajectory[::2]:  # Show every other year
+    for point in result.career_trajectory[::2]:  
         print(f"  Year {point['year']}: ${point['salary']:,.2f} ({point['level']}) - Happiness: {point['happiness_score']:.1f}/10")
 
     print(f"\nRecommendations:")
