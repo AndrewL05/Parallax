@@ -78,6 +78,8 @@ class UsageLimit(BaseModel):
     tier: SubscriptionTier
     simulations_per_week: Optional[int] = None  # None = unlimited
     risk_assessments_per_week: Optional[int] = None  # None = unlimited
+    ml_predictions_per_week: Optional[int] = None  # None = unlimited
+    ml_insights_per_week: Optional[int] = None  # None = unlimited
     advanced_simulations: bool = False
     ai_chatbot_access: bool = True  # Free for all users
     export_formats: list[str] = Field(default_factory=lambda: ["json", "pdf"])
@@ -91,6 +93,8 @@ TIER_LIMITS = {
         tier=SubscriptionTier.FREE,
         simulations_per_week=3,
         risk_assessments_per_week=3,
+        ml_predictions_per_week=5,  # Limited ML predictions
+        ml_insights_per_week=3,  # Limited ML insights
         advanced_simulations=False,
         ai_chatbot_access=True,  # Free access to AI chatbot
         export_formats=["json", "pdf"],  # PDF included for free
@@ -102,6 +106,8 @@ TIER_LIMITS = {
         tier=SubscriptionTier.PREMIUM,
         simulations_per_week=None,  # Unlimited
         risk_assessments_per_week=None,  # Unlimited
+        ml_predictions_per_week=None,  # Unlimited
+        ml_insights_per_week=None,  # Unlimited
         advanced_simulations=True,
         ai_chatbot_access=True,
         export_formats=["json", "pdf", "csv", "excel"],
@@ -120,6 +126,8 @@ class UsageTracking(BaseModel):
     period_end: datetime
     simulations_used: int = 0
     risk_assessments_used: int = 0
+    ml_predictions_used: int = 0
+    ml_insights_used: int = 0
     features_used: Dict[str, int] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

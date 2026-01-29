@@ -3,12 +3,18 @@ ML Scenarios API Routes
 FastAPI endpoints for ML-powered scenario generation and predictions.
 """
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel, Field
 from typing import Optional, Literal
 import os
 import sys
 from pathlib import Path
+import logging
+
+from auth import get_current_user
+from middleware.premium_auth import require_advanced_simulation_access, usage_limited
+
+logger = logging.getLogger(__name__)
 
 ml_dir = Path(__file__).parent.parent / "ml"
 sys.path.insert(0, str(ml_dir))
@@ -67,9 +73,14 @@ class QuickPredictionRequest(BaseModel):
 
 # API Endpoints
 @router.post("/scenarios/generate")
-async def generate_scenarios(request: ScenarioRequest):
+async def generate_scenarios(
+    request: ScenarioRequest,
+    current_user: Optional[dict] = Depends(require_advanced_simulation_access)
+):
     """
     Generate complete life scenarios with ML predictions and narratives.
+
+    **Requires: Premium Subscription**
 
     Returns optimistic, realistic, and pessimistic scenarios with:
     - 10-year timeline projections
@@ -79,6 +90,7 @@ async def generate_scenarios(request: ScenarioRequest):
     - Natural language narratives (optional)
     """
     try:
+        logger.info(f"ML scenario generation requested by user: {current_user.get('clerk_id')}")
         service = get_scenario_service()
 
         result = service.generate_complete_scenarios(
@@ -87,12 +99,15 @@ async def generate_scenarios(request: ScenarioRequest):
             include_narratives=request.include_narratives
         )
 
+        logger.info(f"ML scenario generation completed successfully for user: {current_user.get('clerk_id')}")
+
         return {
             "success": True,
             "data": result
         }
 
     except Exception as e:
+        logger.error(f"ML scenario generation failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Scenario generation failed: {str(e)}")
 
 
@@ -101,14 +116,18 @@ async def generate_single_scenario(
     request: ScenarioRequest,
     scenario_type: Literal["optimistic", "realistic", "pessimistic"] = Query(
         default="realistic", description="Type of scenario to generate"
-    )
+    ),
+    current_user: Optional[dict] = Depends(require_advanced_simulation_access)
 ):
     """
     Generate a single scenario (faster than generating all three).
 
+    **Requires: Premium Subscription**
+
     Returns one scenario with timeline and optional narrative.
     """
     try:
+        logger.info(f"ML single scenario generation requested by user: {current_user.get('clerk_id')}, type: {scenario_type}")
         service = get_scenario_service()
 
         result = service.generate_single_scenario(
@@ -118,24 +137,37 @@ async def generate_single_scenario(
             include_narrative=request.include_narratives
         )
 
+        logger.info(f"ML single scenario generation completed for user: {current_user.get('clerk_id')}")
+
         return {
             "success": True,
             "data": result
         }
 
     except Exception as e:
+        logger.error(f"ML single scenario generation failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Scenario generation failed: {str(e)}")
 
 
 @router.post("/predict/quick")
-async def quick_prediction(request: QuickPredictionRequest):
+@usage_limited("ml_prediction")
+async def quick_prediction(
+    request: QuickPredictionRequest,
+    current_user: Optional[dict] = Depends(get_current_user)
+):
     """
     Generate a quick prediction for a specific future year.
+
+    **Requires: Authentication**
 
     Returns salary, satisfaction, and career metrics across all scenario types
     for the target year.
     """
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
     try:
+        logger.info(f"ML quick prediction requested by user: {current_user.get('clerk_id')}, target_year: {request.target_year}")
         service = get_scenario_service()
 
         result = service.generate_quick_prediction(
@@ -143,19 +175,28 @@ async def quick_prediction(request: QuickPredictionRequest):
             target_year=request.target_year
         )
 
+        logger.info(f"ML quick prediction completed for user: {current_user.get('clerk_id')}")
+
         return {
             "success": True,
             "data": result
         }
 
     except Exception as e:
+        logger.error(f"ML prediction failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
 
 
 @router.post("/insights/career")
-async def get_career_insights(user_profile: UserProfileRequest):
+@usage_limited("ml_insights")
+async def get_career_insights(
+    user_profile: UserProfileRequest,
+    current_user: Optional[dict] = Depends(get_current_user)
+):
     """
     Get personalized career insights and recommendations.
+
+    **Requires: Authentication**
 
     Returns:
     - Career stage assessment
@@ -163,10 +204,16 @@ async def get_career_insights(user_profile: UserProfileRequest):
     - 5-year salary projections
     - Personalized recommendations
     """
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
     try:
+        logger.info(f"ML career insights requested by user: {current_user.get('clerk_id')}")
         service = get_scenario_service()
 
         insights = service.get_career_insights(user_profile.model_dump())
+
+        logger.info(f"ML career insights completed for user: {current_user.get('clerk_id')}")
 
         return {
             "success": True,
@@ -174,6 +221,7 @@ async def get_career_insights(user_profile: UserProfileRequest):
         }
 
     except Exception as e:
+        logger.error(f"ML insights generation failed: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Insights generation failed: {str(e)}")
 
 
