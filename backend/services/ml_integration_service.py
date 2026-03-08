@@ -414,7 +414,7 @@ class MLIntegrationService:
             try:
                 salary_str = str(user_context.current_salary).replace('$', '').replace(',', '').strip()
                 base_salary = float(salary_str)
-            except:
+            except (ValueError, AttributeError):
                 pass
 
         timeline = []
