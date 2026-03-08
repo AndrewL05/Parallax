@@ -144,7 +144,7 @@ class TestMLPredictionService:
 
         assert len(result.predictions) == 10, "Should predict 10 years"
         assert 0.5 <= result.confidence_score <= 1.0, "Confidence should be reasonable"
-        assert result.model_version == "1.0.0-baseline"
+        assert result.model_version in ("2.0.0-xgboost", "1.0.0-fallback")
 
     def test_salary_growth_over_time(self):
         """Test that salary grows over time"""
