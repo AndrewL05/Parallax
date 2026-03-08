@@ -59,8 +59,14 @@ export const useSimulation = () => {
         setSimulation(result);
         return result;
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+        let errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
         console.error("❌ Simulation error details:", err);
+
+        // Surface auth errors clearly
+        if (errorMessage.includes("401") || errorMessage.toLowerCase().includes("authentication required")) {
+          errorMessage = "Please sign in to run a simulation.";
+        }
+
         setError(errorMessage);
         throw err;
       } finally {

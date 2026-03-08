@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { useAuth, useClerk } from "@clerk/clerk-react";
 import type { SimulationFormData, Choice, UserContextForm } from "../types/simulation";
 
 interface LifeChoiceFormProps {
@@ -8,6 +9,8 @@ interface LifeChoiceFormProps {
 }
 
 const LifeChoiceForm: React.FC<LifeChoiceFormProps> = ({ onSubmit, isLoading }) => {
+  const { isSignedIn } = useAuth();
+  const { openSignIn } = useClerk();
   const [choiceA, setChoiceA] = useState<Choice>({
     title: "",
     description: "",
@@ -37,6 +40,11 @@ const LifeChoiceForm: React.FC<LifeChoiceFormProps> = ({ onSubmit, isLoading }) 
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
+
+    if (!isSignedIn) {
+      openSignIn();
+      return;
+    }
 
     // Debug: Log the raw form state
     console.log("🔍 Form state debug:");
@@ -273,6 +281,8 @@ const LifeChoiceForm: React.FC<LifeChoiceFormProps> = ({ onSubmit, isLoading }) 
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
             Generating Your Future...
           </div>
+        ) : !isSignedIn ? (
+          "Sign In to Simulate"
         ) : (
           "Simulate My Life Paths"
         )}
