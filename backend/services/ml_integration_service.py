@@ -5,13 +5,20 @@ Integrates ML predictions with AI-generated life simulations for more realistic 
 """
 
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional, Tuple
 
 from models.simulation import SimulationRequest, TimelinePoint, UserContext
 from models.ml_models import (
     MLPredictionInput, CareerField, EducationLevel, LocationType, MLPredictionResult
 )
 from ml.prediction_service import MLPredictionService
+from ml.profession_data import (
+    detect_profession,
+    get_profession_salary,
+    get_profession_field,
+    get_training_config,
+    PROFESSION_SALARIES
+)
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +27,30 @@ class MLIntegrationService:
 
     def __init__(self):
         self.ml_service = MLPredictionService()
+
+    def _detect_profession_from_choice(
+        self,
+        choice: Dict[str, Any]
+    ) -> Tuple[Optional[str], Optional[Dict[str, int]]]:
+        """
+        Detect specific profession from choice title and description.
+
+        Args:
+            choice: LifeChoice dict with title and description
+
+        Returns:
+            Tuple of (profession_key, salary_data) or (None, None) if not found
+        """
+        title = choice.get("title", "")
+        description = choice.get("description", "")
+
+        profession = detect_profession(title, description)
+
+        if profession and profession in PROFESSION_SALARIES:
+            logger.info(f"Detected profession: {profession} from title: {title}")
+            return profession, PROFESSION_SALARIES[profession]
+
+        return None, None
 
     def convert_simulation_to_ml_input(
         self,
@@ -37,9 +68,19 @@ class MLIntegrationService:
             MLPredictionInput for ML models
         """
 
-        # Map category to career field
+        # First, try to detect specific profession from title
+        detected_profession, profession_salary_data = self._detect_profession_from_choice(choice)
+
+        # Get category (needed for career/location change detection)
         category = choice.get("category", "other").lower()
-        career_field = self._map_category_to_field(category)
+
+        # Map category to career field (use profession field if detected)
+        if detected_profession:
+            career_field = get_profession_field(detected_profession)
+        else:
+            # Also check title for career field hints
+            title = choice.get("title", "").lower()
+            career_field = self._map_category_to_field(category, title)
 
         # Parse education level
         education = self._parse_education_level(user_context.education_level)
@@ -51,7 +92,10 @@ class MLIntegrationService:
         age = int(user_context.age) if user_context.age else 30
         years_experience = max(0, age - 22)  # Assume work started at 22
 
-        # Parse current salary
+        # Determine position level from choice description
+        position_level = self._infer_position_level(choice.get("description", ""), years_experience)
+
+        # Parse current salary - use profession-specific salary if detected
         current_salary = None
         if user_context.current_salary:
             try:
@@ -61,8 +105,11 @@ class MLIntegrationService:
             except (ValueError, AttributeError):
                 current_salary = None
 
-        # Determine position level from choice description
-        position_level = self._infer_position_level(choice.get("description", ""), years_experience)
+        # If profession detected and no user salary, use profession-specific base salary
+        if detected_profession and profession_salary_data and not current_salary:
+            profession_base = profession_salary_data.get(position_level, profession_salary_data.get("entry"))
+            current_salary = float(profession_base)
+            logger.info(f"Using profession salary for {detected_profession} ({position_level}): ${current_salary:,.0f}")
 
         # Determine if career/location change
         is_career_change = "career" in category or "job" in choice.get("title", "").lower()
@@ -85,7 +132,8 @@ class MLIntegrationService:
             is_career_change=is_career_change,
             is_location_change=is_location_change,
             industry_growth_rate=industry_growth_rate,
-            has_remote_option=has_remote
+            has_remote_option=has_remote,
+            detected_profession=detected_profession
         )
 
     def generate_ml_enhanced_timeline(
@@ -151,17 +199,75 @@ class MLIntegrationService:
         ml_input = self.convert_simulation_to_ml_input(choice, user_context)
         return self.ml_service.predict_timeline(ml_input, years=10)
 
-    def _map_category_to_field(self, category: str) -> CareerField:
-        """Map simulation category to career field"""
+    def _map_category_to_field(self, category: str, title: str = "") -> CareerField:
+        """Map simulation category or title to career field"""
+        # Combine category and title for matching
+        combined = f"{category} {title}".lower()
+
+        # Title-based detection takes priority (more specific)
+        title_keywords = {
+            # Healthcare
+            "doctor": CareerField.HEALTHCARE,
+            "physician": CareerField.HEALTHCARE,
+            "surgeon": CareerField.HEALTHCARE,
+            "nurse": CareerField.HEALTHCARE,
+            "dentist": CareerField.HEALTHCARE,
+            "pharmacist": CareerField.HEALTHCARE,
+            "therapist": CareerField.HEALTHCARE,
+            "medical": CareerField.HEALTHCARE,
+
+            # Technology
+            "software": CareerField.TECHNOLOGY,
+            "developer": CareerField.TECHNOLOGY,
+            "programmer": CareerField.TECHNOLOGY,
+            "engineer": CareerField.TECHNOLOGY,  # Will be overridden if more specific
+            "data scientist": CareerField.TECHNOLOGY,
+            "devops": CareerField.TECHNOLOGY,
+            "cybersecurity": CareerField.TECHNOLOGY,
+
+            # Finance
+            "banker": CareerField.FINANCE,
+            "accountant": CareerField.FINANCE,
+            "financial": CareerField.FINANCE,
+            "actuary": CareerField.FINANCE,
+            "trader": CareerField.FINANCE,
+
+            # Legal/Business
+            "lawyer": CareerField.BUSINESS,
+            "attorney": CareerField.BUSINESS,
+            "consultant": CareerField.BUSINESS,
+
+            # Education
+            "teacher": CareerField.EDUCATION,
+            "professor": CareerField.EDUCATION,
+            "instructor": CareerField.EDUCATION,
+
+            # Creative
+            "designer": CareerField.CREATIVE,
+            "artist": CareerField.CREATIVE,
+            "writer": CareerField.CREATIVE,
+            "photographer": CareerField.CREATIVE,
+
+            # Service
+            "chef": CareerField.SERVICE,
+            "pilot": CareerField.SERVICE,
+            "police": CareerField.SERVICE,
+            "firefighter": CareerField.SERVICE,
+        }
+
+        # Check title keywords first
+        for keyword, field in title_keywords.items():
+            if keyword in combined:
+                return field
+
+        # Fallback to category-based mapping
         category_map = {
             "career": CareerField.BUSINESS,
             "job": CareerField.BUSINESS,
             "technology": CareerField.TECHNOLOGY,
             "tech": CareerField.TECHNOLOGY,
-            "software": CareerField.TECHNOLOGY,
             "healthcare": CareerField.HEALTHCARE,
             "health": CareerField.HEALTHCARE,
-            "medical": CareerField.HEALTHCARE,
             "finance": CareerField.FINANCE,
             "banking": CareerField.FINANCE,
             "engineering": CareerField.ENGINEERING,
@@ -213,20 +319,26 @@ class MLIntegrationService:
 
         location_lower = location.lower()
 
-        major_cities = ["new york", "los angeles", "chicago", "houston", "phoenix",
-                       "philadelphia", "san francisco", "seattle", "boston", "miami",
-                       "london", "tokyo", "paris", "singapore"]
-
-        for city in major_cities:
-            if city in location_lower:
-                return LocationType.MAJOR_CITY
-
+        # Check qualifying words first — "suburban Chicago" is a suburb, not a major city
         if any(word in location_lower for word in ["suburb", "suburban"]):
             return LocationType.SUBURB
         elif any(word in location_lower for word in ["rural", "country", "small town"]):
             return LocationType.RURAL
         elif any(word in location_lower for word in ["international", "abroad", "overseas"]):
             return LocationType.INTERNATIONAL
+
+        # International cities — classify as international before checking US major cities
+        international_cities = ["london", "tokyo", "paris", "singapore", "berlin",
+                               "sydney", "toronto", "mumbai", "shanghai", "dubai"]
+        for city in international_cities:
+            if city in location_lower:
+                return LocationType.INTERNATIONAL
+
+        us_major_cities = ["new york", "los angeles", "chicago", "houston", "phoenix",
+                          "philadelphia", "san francisco", "seattle", "boston", "miami"]
+        for city in us_major_cities:
+            if city in location_lower:
+                return LocationType.MAJOR_CITY
 
         return LocationType.SMALL_CITY
 
@@ -257,20 +369,26 @@ class MLIntegrationService:
         else:
             return "executive"
 
-    def _get_industry_growth_rate(self, career_field: CareerField) -> float:
+    def _get_industry_growth_rate(self, career_field) -> float:
         """Get estimated industry growth rate"""
+        # Get string key for lookup
+        if hasattr(career_field, 'value'):
+            key = career_field.value.lower()
+        else:
+            key = str(career_field).lower()
+
         growth_rates = {
-            CareerField.TECHNOLOGY: 0.08,  # 8% - high growth
-            CareerField.HEALTHCARE: 0.06,  # 6% - strong growth
-            CareerField.FINANCE: 0.04,     # 4% - moderate growth
-            CareerField.ENGINEERING: 0.05, # 5% - moderate growth
-            CareerField.EDUCATION: 0.02,   # 2% - slow growth
-            CareerField.BUSINESS: 0.04,    # 4% - moderate growth
-            CareerField.CREATIVE: 0.03,    # 3% - modest growth
-            CareerField.SERVICE: 0.03,     # 3% - modest growth
-            CareerField.OTHER: 0.03        # 3% - default
+            "technology": 0.08,  # 8% - high growth
+            "healthcare": 0.06,  # 6% - strong growth
+            "finance": 0.04,     # 4% - moderate growth
+            "engineering": 0.05, # 5% - moderate growth
+            "education": 0.02,   # 2% - slow growth
+            "business": 0.04,    # 4% - moderate growth
+            "creative": 0.03,    # 3% - modest growth
+            "service": 0.03,     # 3% - modest growth
+            "other": 0.03        # 3% - default
         }
-        return growth_rates.get(career_field, 0.03)
+        return growth_rates.get(key, 0.03)
 
     def _select_major_event(self, event_probabilities: Dict[str, float]) -> str:
         """Select most likely major event from probabilities"""
