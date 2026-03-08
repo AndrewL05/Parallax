@@ -43,17 +43,20 @@ class MLPredictionInput(BaseModel):
 
     # Career context
     career_field: CareerField
-    position_level: str  
+    position_level: str
     location_type: LocationType
 
     # Choice-specific
     is_career_change: bool = False
     is_location_change: bool = False
-    industry_growth_rate: float = Field(0.03, ge=-0.2, le=0.5)  
+    industry_growth_rate: float = Field(0.03, ge=-0.2, le=0.5)
 
     # Optional factors
     has_remote_option: bool = False
-    company_size: Optional[str] = None  
+    company_size: Optional[str] = None
+
+    # Detected profession for salary/trajectory calculations
+    detected_profession: Optional[str] = None
 
     class Config:
         use_enum_values = True

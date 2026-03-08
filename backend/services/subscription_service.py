@@ -25,12 +25,12 @@ class SubscriptionService:
         )
 
         if subscription_doc:
-            # Convert MongoDB ObjectId to string
+            
             if "_id" in subscription_doc:
                 subscription_doc["_id"] = str(subscription_doc["_id"])
             return Subscription(**subscription_doc)
 
-        # Create default free subscription if none exists
+        # create default free subscription if none exists
         return await SubscriptionService.create_free_subscription(user_id)
 
     @staticmethod
@@ -43,7 +43,7 @@ class SubscriptionService:
             tier=SubscriptionTier.FREE,
             status=SubscriptionStatus.ACTIVE,
             current_period_start=datetime.utcnow(),
-            current_period_end=datetime.utcnow() + timedelta(days=365)  # So free tier doesn't expire
+            current_period_end=datetime.utcnow() + timedelta(days=365)  # So the free tier doesn't expire
         )
 
         await db.subscriptions.insert_one(subscription.dict())
@@ -191,6 +191,34 @@ class SubscriptionService:
                 result["allowed"] = False
                 result["reason"] = "Custom scenarios require premium subscription"
 
+        elif feature == "ml_prediction":
+            if limits.ml_predictions_per_week is not None:
+                # Check current week usage
+                usage = await SubscriptionService.get_current_usage(user_id)
+                if usage.ml_predictions_used >= limits.ml_predictions_per_week:
+                    result["allowed"] = False
+                    result["reason"] = f"Weekly limit of {limits.ml_predictions_per_week} ML predictions reached"
+
+                result["usage_info"] = {
+                    "used": usage.ml_predictions_used,
+                    "limit": limits.ml_predictions_per_week,
+                    "remaining": limits.ml_predictions_per_week - usage.ml_predictions_used
+                }
+
+        elif feature == "ml_insights":
+            if limits.ml_insights_per_week is not None:
+                # Check current week usage
+                usage = await SubscriptionService.get_current_usage(user_id)
+                if usage.ml_insights_used >= limits.ml_insights_per_week:
+                    result["allowed"] = False
+                    result["reason"] = f"Weekly limit of {limits.ml_insights_per_week} ML insights reached"
+
+                result["usage_info"] = {
+                    "used": usage.ml_insights_used,
+                    "limit": limits.ml_insights_per_week,
+                    "remaining": limits.ml_insights_per_week - usage.ml_insights_used
+                }
+
         return result
 
     @staticmethod
@@ -240,6 +268,10 @@ class SubscriptionService:
             update_data["simulations_used"] = usage.simulations_used + amount
         elif feature == "risk_assessment":
             update_data["risk_assessments_used"] = usage.risk_assessments_used + amount
+        elif feature == "ml_prediction":
+            update_data["ml_predictions_used"] = usage.ml_predictions_used + amount
+        elif feature == "ml_insights":
+            update_data["ml_insights_used"] = usage.ml_insights_used + amount
         else:
             # Update features_used dictionary
             features_used = usage.features_used.copy()
@@ -274,6 +306,10 @@ class SubscriptionService:
                 "simulations_limit": limits.simulations_per_week,
                 "risk_assessments_used": usage.risk_assessments_used,
                 "risk_assessments_limit": limits.risk_assessments_per_week,
+                "ml_predictions_used": usage.ml_predictions_used,
+                "ml_predictions_limit": limits.ml_predictions_per_week,
+                "ml_insights_used": usage.ml_insights_used,
+                "ml_insights_limit": limits.ml_insights_per_week,
                 "features_used": usage.features_used,
                 "period_start": usage.period_start,
                 "period_end": usage.period_end

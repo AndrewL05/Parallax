@@ -22,8 +22,8 @@ async def create_life_simulation(
     current_user: Optional[dict] = Depends(require_simulation_access)
 ):
     """Generate AI-powered life simulation comparing two choices"""
-    logger.info(f"🔍 Received simulation request: {request}")
-    logger.info(f"🔍 Request dict: {request.dict()}")
+    logger.info(f"Received simulation request: {request}")
+    logger.debug(f"Request dict: {request.dict()}")
 
     db = await get_database()
     user_id = current_user.get("id") if current_user else None
