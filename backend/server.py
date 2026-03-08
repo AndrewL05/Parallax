@@ -4,14 +4,13 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 import logging
-import os
-import json
 from pathlib import Path
 from dotenv import load_dotenv
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
+from config import CORS_ORIGINS, API_TITLE, API_VERSION, SERVER_HOST, SERVER_PORT
 from routes.auth import router as auth_router
 from routes.simulation import router as simulation_router
 from routes.payments import router as payments_router
@@ -19,11 +18,11 @@ from routes.premium import router as premium_router
 from routes.ml_scenarios import router as ml_scenarios_router
 from database import init_database, close_database
 
-app = FastAPI(title="Parallax Life Simulator API", version="1.0.0")
+app = FastAPI(title=API_TITLE, version=API_VERSION)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,11 +31,11 @@ app.add_middleware(
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     if request.url.path == "/api/simulate":
-        logger.info(f"🔍 Request method: {request.method}")
-        logger.info(f"🔍 Request path: {request.url.path}")
-        logger.info(f"🔍 Content-Type: {request.headers.get('content-type')}")
-        logger.info(f"🔍 Authorization header: {bool(request.headers.get('authorization'))}")
-    
+        logger.info(f"Request method: {request.method}")
+        logger.info(f"Request path: {request.url.path}")
+        logger.info(f"Content-Type: {request.headers.get('content-type')}")
+        logger.info(f"Authorization header present: {bool(request.headers.get('authorization'))}")
+
     response = await call_next(request)
     return response
 
@@ -64,7 +63,7 @@ app.include_router(ml_scenarios_router)
 @app.get("/api/")
 async def root():
     """API health check"""
-    return {"message": "Parallax Life Simulator API", "version": "1.0.0", "status": "healthy"}
+    return {"message": API_TITLE, "version": API_VERSION, "status": "healthy"}
 
 @app.on_event("startup")
 async def startup_event():
@@ -95,10 +94,10 @@ async def health_check():
     """System health check"""
     return {
         "status": "healthy",
-        "service": "Parallax Life Simulator API",
-        "version": "1.0.0"
+        "service": API_TITLE,
+        "version": API_VERSION
     }
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host=SERVER_HOST, port=SERVER_PORT)

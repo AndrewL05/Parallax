@@ -5,9 +5,20 @@ Integrate LLM (OpenRouter) to generate natural language narratives for life scen
 This module wraps ML scenario predictions with human-readable narratives.
 """
 
-import os
+import logging
 from typing import Dict, List, Optional
 from openai import OpenAI
+
+from config import (
+    OPENROUTER_BASE_URL,
+    OPENROUTER_API_KEY,
+    LLM_MODEL_FAST,
+    LLM_TEMPERATURE,
+    LLM_MAX_TOKENS_NARRATIVE,
+    LLM_MAX_TOKENS_COMPARISON,
+)
+
+logger = logging.getLogger(__name__)
 
 
 class NarrativeGenerator:
@@ -26,18 +37,18 @@ class NarrativeGenerator:
             api_key: OpenRouter API key (defaults to OPENROUTER_API_KEY env var)
             base_url: OpenRouter base URL (defaults to standard URL)
         """
-        self.api_key = api_key or os.getenv("OPENROUTER_API_KEY")
-        self.base_url = base_url or "https://openrouter.ai/api/v1"
+        self.api_key = api_key or OPENROUTER_API_KEY
+        self.base_url = base_url or OPENROUTER_BASE_URL
 
         if self.api_key:
             self.client = OpenAI(
                 api_key=self.api_key,
                 base_url=self.base_url
             )
-            print("[OK] LLM client initialized")
+            logger.info("LLM client initialized")
         else:
             self.client = None
-            print("[WARN] No OpenRouter API key found, narratives will be template-based")
+            logger.warning("No OpenRouter API key found, narratives will be template-based")
 
     def generate_scenario_narrative(
         self,
@@ -115,7 +126,7 @@ Make it personal, realistic, and thoughtful. Use a warm, professional tone."""
 
         try:
             response = self.client.chat.completions.create(
-                model="meta-llama/llama-3.2-3b-instruct:free",
+                model=LLM_MODEL_FAST,
                 messages=[
                     {
                         "role": "system",
@@ -126,15 +137,15 @@ Make it personal, realistic, and thoughtful. Use a warm, professional tone."""
                         "content": prompt
                     }
                 ],
-                max_tokens=500,
-                temperature=0.7
+                max_tokens=LLM_MAX_TOKENS_NARRATIVE,
+                temperature=LLM_TEMPERATURE
             )
 
             narrative = response.choices[0].message.content.strip()
             return narrative
 
         except Exception as e:
-            print(f"[WARN] LLM generation failed: {e}")
+            logger.warning(f"LLM generation failed: {e}")
             return self._generate_template_narrative(
                 user_profile,
                 scenario_type,
@@ -286,7 +297,7 @@ Be thoughtful, realistic, and empowering."""
 
         try:
             response = self.client.chat.completions.create(
-                model="meta-llama/llama-3.2-3b-instruct:free",
+                model=LLM_MODEL_FAST,
                 messages=[
                     {
                         "role": "system",
@@ -297,14 +308,14 @@ Be thoughtful, realistic, and empowering."""
                         "content": prompt
                     }
                 ],
-                max_tokens=400,
-                temperature=0.7
+                max_tokens=LLM_MAX_TOKENS_COMPARISON,
+                temperature=LLM_TEMPERATURE
             )
 
             return response.choices[0].message.content.strip()
 
         except Exception as e:
-            print(f"[WARN] LLM comparison failed: {e}")
+            logger.warning(f"LLM comparison failed: {e}")
             return self._generate_template_comparison(
                 user_profile,
                 all_scenarios,
@@ -408,74 +419,3 @@ Be thoughtful, realistic, and empowering."""
             parts.append(" You face some challenges but remain resilient.")
 
         return " ".join(parts)
-
-
-if __name__ == "__main__":
-    # Example usage
-    print("=== Narrative Generator Example ===\n")
-
-    # Initialize generator
-    generator = NarrativeGenerator()
-
-    # Example scenario data
-    user_profile = {
-        'age': 28,
-        'education': 'bachelors',
-        'field': 'technology',
-        'experience_years': 4,
-        'current_salary': 85000
-    }
-
-    comparison_stats = {
-        'final_salary': 140693.54,
-        'salary_growth': 59.5,
-        'total_promotions': 1,
-        'avg_life_satisfaction': 8.06,
-        'avg_career_growth_index': 39.06,
-        'final_financial_security': 7.82
-    }
-
-    timeline = [
-        {
-            'year': 1,
-            'age': 28,
-            'salary': 85000,
-            'life_satisfaction': 7.5,
-            'is_promoted': False,
-            'life_events': ['Started new role']
-        },
-        {
-            'year': 5,
-            'age': 32,
-            'salary': 104349,
-            'life_satisfaction': 8.14,
-            'is_promoted': False,
-            'life_events': ['Purchased first home']
-        },
-        {
-            'year': 10,
-            'age': 37,
-            'salary': 140693,
-            'life_satisfaction': 8.5,
-            'is_promoted': True,
-            'life_events': ['Received promotion to higher position']
-        }
-    ]
-
-    # Generate narrative
-    print("Generating realistic scenario narrative...\n")
-    narrative = generator.generate_scenario_narrative(
-        user_profile,
-        'realistic',
-        timeline,
-        comparison_stats
-    )
-
-    print("=== REALISTIC SCENARIO NARRATIVE ===")
-    print(narrative)
-    print("\n" + "="*50 + "\n")
-
-    # Generate year narrative
-    print("Year 5 Narrative:")
-    year_narrative = generator.generate_year_narrative(timeline[1])
-    print(year_narrative)
