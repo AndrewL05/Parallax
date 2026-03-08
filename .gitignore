@@ -1,4 +1,3 @@
-# IDE and editors
 .idea/
 .vscode/
 
@@ -24,45 +23,29 @@ build/
 dist/
 dist
 
-# Environment files (comprehensive coverage)
+# Environment files 
 .env
 *token.json*
 *credentials.json*
 
-# Logs and debug files
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 dump.rdb
 
-# System files
 .DS_Store
 *.pem
 
-# Python
 __pycache__/
 *pyc*
 venv/
 .venv/
 
-# Development tools
-chainlit.md
-.chainlit
-.ipynb_checkpoints/
-.ac
-
-# Deployment
 .vercel
 
 # Data and databases
 agenthub/agents/youtube/db
-
-# ML datasets
-backend/ml/data/*
-backend/ml/data/*.csv
-backend/ml/data/*.parquet
-backend/ml/data/*.xlsx
 
 # Jupyter notebooks
 *.ipynb_checkpoints/
