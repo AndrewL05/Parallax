@@ -37,7 +37,6 @@ def get_openai_client():
     global client
     if client is None:
         if OPENROUTER_API_KEY:
-            logger.info("OpenRouter API key configured")
             client = openai.OpenAI(
                 base_url=OPENROUTER_BASE_URL,
                 api_key=OPENROUTER_API_KEY,
