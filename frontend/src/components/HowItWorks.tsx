@@ -1,79 +1,31 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-interface Step {
-  number: string;
-  title: string;
-  description: string;
-  icon: string;
-}
-
 const HowItWorksSection: React.FC = () => {
-  const steps: Step[] = [
-    {
-      number: '1',
-      title: 'Define Your Choices',
-      description: 'Input two different life paths you\'re considering, with detailed descriptions and context.',
-      icon: '✏️'
-    },
-    {
-      number: '2',
-      title: 'AI Analysis',
-      description: 'Our advanced AI analyzes your options and generates realistic 10-year projections.',
-      icon: '🧠'
-    },
-    {
-      number: '3',
-      title: 'Explore Results',
-      description: 'Visualize and compare timelines showing salary, happiness, and major life events.',
-      icon: '📈'
-    },
-    {
-      number: '4',
-      title: 'Make Decisions',
-      description: 'Use insights to make informed choices about your future with confidence.',
-      icon: '🎯'
-    }
+  const steps = [
+    { num: "01", text: "Describe two life paths you're weighing" },
+    { num: "02", text: "Our ML model projects 10 years for each" },
+    { num: "03", text: "Compare salary, happiness, and milestones" },
   ];
 
   return (
     <section id="how-it-works" className="py-20 bg-white">
-      <div className="max-w-7xl mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16"
-        >
-          <h2 className="text-5xl font-bold text-gray-800 mb-6">
-            How It Works
-          </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Simple steps to unlock insights about your future
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {steps.map((step, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6, delay: index * 0.15 }}
-              className="text-center"
-            >
-              <div className="relative mb-6">
-                <div className="w-20 h-20 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4 shadow-lg">
-                  {step.number}
-                </div>
-                <div className="text-4xl mb-4">{step.icon}</div>
-              </div>
-              <h3 className="text-xl font-bold text-gray-800 mb-4">{step.title}</h3>
-              <p className="text-gray-600 leading-relaxed">{step.description}</p>
-            </motion.div>
-          ))}
+      <div className="max-w-5xl mx-auto px-5">
+        <div className="border-t border-stone-200 pt-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {steps.map((step, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: i * 0.1 }}
+              >
+                <span className="text-stone-300 text-sm font-mono">{step.num}</span>
+                <p className="text-stone-800 text-[15px] leading-relaxed mt-2">{step.text}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

@@ -11,282 +11,138 @@ interface LifeChoiceFormProps {
 const LifeChoiceForm: React.FC<LifeChoiceFormProps> = ({ onSubmit, isLoading }) => {
   const { isSignedIn } = useAuth();
   const { openSignIn } = useClerk();
-  const [choiceA, setChoiceA] = useState<Choice>({
-    title: "",
-    description: "",
-    category: "career",
-  });
 
-  const [choiceB, setChoiceB] = useState<Choice>({
-    title: "",
-    description: "",
-    category: "career",
-  });
-
+  const [choiceA, setChoiceA] = useState<Choice>({ title: "", description: "", category: "career" });
+  const [choiceB, setChoiceB] = useState<Choice>({ title: "", description: "", category: "career" });
   const [userContext, setUserContext] = useState<UserContextForm>({
-    age: "",
-    current_location: "",
-    current_salary: "",
-    education_level: "",
+    age: "", current_location: "", current_salary: "", education_level: "",
   });
 
-  const categories: string[] = [
-    "career",
-    "location",
-    "education",
-    "relationship",
-    "lifestyle",
-  ];
+  const categories = ["career", "location", "education", "relationship", "lifestyle"];
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
+    if (!isSignedIn) { openSignIn(); return; }
 
-    if (!isSignedIn) {
-      openSignIn();
-      return;
-    }
-
-    // Debug: Log the raw form state
-    console.log("🔍 Form state debug:");
-    console.log("choiceA:", choiceA);
-    console.log("choiceB:", choiceB);
-    console.log("userContext:", userContext);
-
-    // Transform user context data to ensure proper types
-    const transformedUserContext: any = {
+    const ctx: any = {
       ...userContext,
-      // Convert age to integer if provided, otherwise keep as null/empty
       age: userContext.age ? parseInt(userContext.age, 10) : null,
-      // Convert salary to integer if provided, otherwise keep as null/empty
-      current_salary: userContext.current_salary
-        ? parseInt(userContext.current_salary, 10)
-        : null,
+      current_salary: userContext.current_salary ? parseInt(userContext.current_salary, 10) : null,
     };
-
-    // Clean up empty values but ensure user_context is never completely empty
-    Object.keys(transformedUserContext).forEach((key) => {
-      if (
-        transformedUserContext[key] === null ||
-        transformedUserContext[key] === "" ||
-        transformedUserContext[key] === undefined
-      ) {
-        delete transformedUserContext[key];
-      }
+    Object.keys(ctx).forEach((k) => {
+      if (ctx[k] === null || ctx[k] === "" || ctx[k] === undefined) delete ctx[k];
     });
+    if (Object.keys(ctx).length === 0) ctx.age = null;
 
-    // Ensure user_context always has at least one field to prevent empty object issues
-    if (Object.keys(transformedUserContext).length === 0) {
-      transformedUserContext.age = null;
-    }
-
-    // Auto-detect categories for better UX
-    const detectCategory = (title: string, selectedCategory: string): string => {
-      const titleLower = title.toLowerCase();
-      if (
-        titleLower.includes("university") ||
-        titleLower.includes("college") ||
-        titleLower.includes("school") ||
-        titleLower.includes("education")
-      ) {
-        return "education";
-      }
-      if (
-        titleLower.includes("move") ||
-        titleLower.includes("relocate") ||
-        titleLower.includes("city") ||
-        titleLower.includes("country")
-      ) {
-        return "location";
-      }
-      return selectedCategory || "career"; // Default to career if not detected
+    const detect = (title: string, sel: string) => {
+      const t = title.toLowerCase();
+      if (["university","college","school","education"].some(w => t.includes(w))) return "education";
+      if (["move","relocate","city","country"].some(w => t.includes(w))) return "location";
+      return sel || "career";
     };
 
-    // Ensure clean data structure
-    const cleanedData: SimulationFormData = {
-      choice_a: {
-        title: choiceA.title || "",
-        description: choiceA.description || "",
-        category: detectCategory(choiceA.title, choiceA.category),
-      },
-      choice_b: {
-        title: choiceB.title || "",
-        description: choiceB.description || "",
-        category: detectCategory(choiceB.title, choiceB.category),
-      },
-      user_context: transformedUserContext,
-    };
-
-    console.log("🧹 Cleaned data being sent:", cleanedData);
-    onSubmit(cleanedData);
+    onSubmit({
+      choice_a: { title: choiceA.title, description: choiceA.description, category: detect(choiceA.title, choiceA.category) },
+      choice_b: { title: choiceB.title, description: choiceB.description, category: detect(choiceB.title, choiceB.category) },
+      user_context: ctx,
+    });
   };
+
+  const input = "w-full px-4 py-3 bg-white border-2 border-stone-300 rounded-xl text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-100 transition-colors";
+  const select = "w-full px-4 py-3 bg-white border-2 border-stone-300 rounded-xl text-sm text-stone-900 focus:outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-100 transition-colors appearance-none cursor-pointer";
 
   return (
     <motion.form
       onSubmit={handleSubmit}
-      className="bg-white rounded-2xl shadow-xl p-8 max-w-4xl mx-auto"
+      className="max-w-3xl mx-auto"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
+      transition={{ duration: 0.4 }}
     >
-      <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
-        Compare Your Life Paths
+      <h2 className="text-3xl sm:text-4xl font-bold text-stone-900 mb-2">
+        Run a simulation
       </h2>
+      <p className="text-stone-400 text-sm mb-12">
+        Define two paths and your background. We'll do the rest.
+      </p>
 
-      {/* User Context */}
-      <div className="mb-8 p-6 bg-gray-50 rounded-xl">
-        <h3 className="text-xl font-semibold mb-4">About You</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <input
-            type="number"
-            placeholder="Your age"
-            value={userContext.age}
-            onChange={(e) =>
-              setUserContext({ ...userContext, age: e.target.value })
-            }
-            className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <input
-            type="text"
-            placeholder="Current location"
-            value={userContext.current_location}
-            onChange={(e) =>
-              setUserContext({
-                ...userContext,
-                current_location: e.target.value,
-              })
-            }
-            className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <input
-            type="number"
-            placeholder="Current salary (optional)"
-            value={userContext.current_salary}
-            onChange={(e) =>
-              setUserContext({ ...userContext, current_salary: e.target.value })
-            }
-            className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
-          <select
-            value={userContext.education_level}
-            onChange={(e) =>
-              setUserContext({
-                ...userContext,
-                education_level: e.target.value,
-              })
-            }
-            className="p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            <option value="">Education level</option>
+      {/* Context */}
+      <div className="mb-12">
+        <p className="text-xs tracking-widest uppercase text-stone-400 mb-6">Your background</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
+          <input type="number" placeholder="Age" value={userContext.age}
+            onChange={(e) => setUserContext({ ...userContext, age: e.target.value })} className={input} />
+          <input type="text" placeholder="Location" value={userContext.current_location}
+            onChange={(e) => setUserContext({ ...userContext, current_location: e.target.value })} className={input} />
+          <input type="number" placeholder="Salary (optional)" value={userContext.current_salary}
+            onChange={(e) => setUserContext({ ...userContext, current_salary: e.target.value })} className={input} />
+          <select value={userContext.education_level}
+            onChange={(e) => setUserContext({ ...userContext, education_level: e.target.value })} className={select}>
+            <option value="">Education</option>
             <option value="high_school">High School</option>
-            <option value="bachelors">Bachelor's Degree</option>
-            <option value="masters">Master's Degree</option>
+            <option value="bachelors">Bachelor's</option>
+            <option value="masters">Master's</option>
             <option value="phd">PhD</option>
           </select>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Choice A */}
-        <motion.div
-          className="p-6 border-2 border-blue-200 rounded-xl bg-blue-50"
-          whileHover={{ scale: 1.02 }}
-          transition={{ duration: 0.2 }}
-        >
-          <h3 className="text-xl font-semibold text-blue-800 mb-4">Path A</h3>
-          <input
-            type="text"
-            placeholder="e.g., Become a Software Engineer"
-            value={choiceA.title}
-            onChange={(e) => setChoiceA({ ...choiceA, title: e.target.value })}
-            className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          />
-          <textarea
-            placeholder="Describe this path in detail..."
-            value={choiceA.description}
-            onChange={(e) =>
-              setChoiceA({ ...choiceA, description: e.target.value })
-            }
-            className="w-full p-3 mb-4 border border-gray-300 rounded-lg h-24 resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-          />
-          <select
-            value={choiceA.category}
-            onChange={(e) =>
-              setChoiceA({ ...choiceA, category: e.target.value })
-            }
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          >
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </option>
-            ))}
+      {/* Paths */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
+        <div>
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-2 h-2 rounded-full bg-blue-500" />
+            <p className="text-xs tracking-widest uppercase text-stone-400">Path A</p>
+          </div>
+          <input type="text" placeholder="Job title or life choice" value={choiceA.title}
+            onChange={(e) => setChoiceA({ ...choiceA, title: e.target.value })} className={input} required />
+          <textarea placeholder="Describe this path..." value={choiceA.description}
+            onChange={(e) => setChoiceA({ ...choiceA, description: e.target.value })}
+            className={`${input} resize-none h-20 mt-3`} required />
+          <select value={choiceA.category} onChange={(e) => setChoiceA({ ...choiceA, category: e.target.value })}
+            className={`${select} mt-3`}>
+            {categories.map((c) => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
           </select>
-        </motion.div>
+        </div>
 
-        {/* Choice B */}
-        <motion.div
-          className="p-6 border-2 border-green-200 rounded-xl bg-green-50"
-          whileHover={{ scale: 1.02 }}
-          transition={{ duration: 0.2 }}
-        >
-          <h3 className="text-xl font-semibold text-green-800 mb-4">Path B</h3>
-          <input
-            type="text"
-            placeholder="e.g., Start my own business"
-            value={choiceB.title}
-            onChange={(e) => setChoiceB({ ...choiceB, title: e.target.value })}
-            className="w-full p-3 mb-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            required
-          />
-          <textarea
-            placeholder="Describe this path in detail..."
-            value={choiceB.description}
-            onChange={(e) =>
-              setChoiceB({ ...choiceB, description: e.target.value })
-            }
-            className="w-full p-3 mb-4 border border-gray-300 rounded-lg h-24 resize-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            required
-          />
-          <select
-            value={choiceB.category}
-            onChange={(e) =>
-              setChoiceB({ ...choiceB, category: e.target.value })
-            }
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          >
-            {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat.charAt(0).toUpperCase() + cat.slice(1)}
-              </option>
-            ))}
+        <div>
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-2 h-2 rounded-full bg-emerald-500" />
+            <p className="text-xs tracking-widest uppercase text-stone-400">Path B</p>
+          </div>
+          <input type="text" placeholder="Job title or life choice" value={choiceB.title}
+            onChange={(e) => setChoiceB({ ...choiceB, title: e.target.value })} className={input} required />
+          <textarea placeholder="Describe this path..." value={choiceB.description}
+            onChange={(e) => setChoiceB({ ...choiceB, description: e.target.value })}
+            className={`${input} resize-none h-20 mt-3`} required />
+          <select value={choiceB.category} onChange={(e) => setChoiceB({ ...choiceB, category: e.target.value })}
+            className={`${select} mt-3`}>
+            {categories.map((c) => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
           </select>
-        </motion.div>
+        </div>
       </div>
 
-      <motion.button
+      {/* Submit */}
+      <button
         type="submit"
         disabled={isLoading || !choiceA.title || !choiceB.title}
-        className={`w-full mt-8 py-4 px-6 rounded-xl text-white font-semibold text-lg transition-all duration-300 ${
+        className={`w-full py-3.5 rounded-xl text-sm font-medium transition-colors ${
           isLoading || !choiceA.title || !choiceB.title
-            ? "bg-gray-400 cursor-not-allowed"
-            : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 shadow-lg hover:shadow-xl"
+            ? "bg-stone-200 text-stone-500 border-2 border-stone-300 cursor-not-allowed"
+            : "bg-stone-950 text-white hover:bg-stone-800 active:scale-[0.99]"
         }`}
-        whileHover={!isLoading ? { scale: 1.02 } : {}}
-        whileTap={!isLoading ? { scale: 0.98 } : {}}
       >
         {isLoading ? (
-          <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mr-3"></div>
-            Generating Your Future...
-          </div>
+          <span className="flex items-center justify-center gap-2">
+            <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            Running simulation...
+          </span>
         ) : !isSignedIn ? (
-          "Sign In to Simulate"
+          "Sign in to simulate"
         ) : (
-          "Simulate My Life Paths"
+          "Simulate"
         )}
-      </motion.button>
+      </button>
     </motion.form>
   );
 };
