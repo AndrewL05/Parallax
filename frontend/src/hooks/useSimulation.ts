@@ -87,5 +87,6 @@ export const useSimulation = () => {
     error,
     createSimulation,
     resetSimulation,
+    setSimulation,
   };
 };

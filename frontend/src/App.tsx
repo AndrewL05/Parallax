@@ -25,7 +25,7 @@ type ViewType = "home" | "results" | "subscription";
 const AppContent: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>("home");
   const {} = useAuth();
-  const { simulation, isLoading, createSimulation, resetSimulation } = useSimulation();
+  const { simulation, isLoading, createSimulation, resetSimulation, setSimulation } = useSimulation();
 
   const handleSimulationSubmit = async (formData: SimulationFormData): Promise<void> => {
     try {
@@ -46,6 +46,11 @@ const AppContent: React.FC = () => {
 
   const handleNewSimulation = () => { resetSimulation(); setCurrentView("home"); };
   const handleLogoClick = () => { resetSimulation(); setCurrentView("home"); };
+  const handleViewSimulation = (sim: import("./types/api").SimulationResult) => {
+    setSimulation(sim);
+    setCurrentView("results");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div className="min-h-screen">
@@ -81,7 +86,7 @@ const AppContent: React.FC = () => {
             <motion.div key="subscription" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
               className="pt-20 pb-20 min-h-screen bg-stone-50">
               <div className="max-w-5xl mx-auto px-5">
-                <SubscriptionStatus />
+                <SubscriptionStatus onViewSimulation={handleViewSimulation} />
               </div>
             </motion.div>
           )}
