@@ -42,10 +42,10 @@ const PricingSection: React.FC = () => {
           Start free. Upgrade if you want more.
         </motion.h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-stone-200 rounded-2xl overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-px rounded-2xl overflow-hidden border-2 border-stone-200">
           {/* Free */}
           <motion.div
-            className="bg-white p-8 sm:p-10"
+            className="bg-stone-50 p-8 sm:p-10"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
@@ -66,7 +66,7 @@ const PricingSection: React.FC = () => {
 
             <button
               onClick={scrollToSimulator}
-              className="w-full py-3 border border-stone-200 rounded-xl text-sm font-medium text-stone-700 hover:border-stone-400 transition-colors"
+              className="w-full py-3 border-2 border-stone-300 rounded-xl text-sm font-medium text-stone-700 hover:border-stone-500 transition-colors"
             >
               Get started
             </button>
@@ -90,10 +90,9 @@ const PricingSection: React.FC = () => {
               {[
                 "Unlimited simulations",
                 "Risk assessment",
-                "AI chatbot",
+                "AI chatbot (Coming Soon)",
                 "PDF, CSV, Excel exports",
                 "Market analysis",
-                "Priority support",
                 "12-month history",
               ].map((f, i) => (
                 <li key={i} className="flex items-start gap-2">
