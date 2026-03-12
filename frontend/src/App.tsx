@@ -25,133 +25,68 @@ type ViewType = "home" | "results" | "subscription";
 const AppContent: React.FC = () => {
   const [currentView, setCurrentView] = useState<ViewType>("home");
   const {} = useAuth();
-  const { simulation, isLoading, createSimulation, resetSimulation } =
-    useSimulation();
+  const { simulation, isLoading, createSimulation, resetSimulation, setSimulation } = useSimulation();
 
-  const handleSimulationSubmit = async (
-    formData: SimulationFormData
-  ): Promise<void> => {
+  const handleSimulationSubmit = async (formData: SimulationFormData): Promise<void> => {
     try {
-      console.log("Submitting simulation data:", formData);
       await createSimulation(formData);
       setCurrentView("results");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {
       console.error("Simulation failed:", error);
-
-      let errorMessage = "Failed to generate simulation. Please try again.";
+      let msg = "Failed to generate simulation. Please try again.";
       if (error instanceof Error) {
-        if (error.message.includes("Input should be a valid string")) {
-          errorMessage =
-            "Please check that all fields are filled correctly. Age and salary should be numbers.";
-        } else if (error.message.includes("422")) {
-          errorMessage =
-            "There was an issue with your input data. Please check all fields and try again.";
+        if (error.message.includes("401") || error.message.toLowerCase().includes("sign in")) {
+          msg = "Please sign in to run a simulation.";
         }
       }
-
-      alert(errorMessage);
+      alert(msg);
     }
   };
 
-  const handleNewSimulation = (): void => {
-    resetSimulation();
-    setCurrentView("home");
-  };
-
-  const handleLogoClick = (): void => {
-    resetSimulation();
-    setCurrentView("home");
+  const handleNewSimulation = () => { resetSimulation(); setCurrentView("home"); };
+  const handleLogoClick = () => { resetSimulation(); setCurrentView("home"); };
+  const handleViewSimulation = (sim: import("./types/api").SimulationResult) => {
+    setSimulation(sim);
+    setCurrentView("results");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
     <div className="min-h-screen">
-      <Navigation
-        onLogoClick={handleLogoClick}
-        onSubscriptionClick={() => setCurrentView("subscription")}
-      />
+      <Navigation onLogoClick={handleLogoClick} onSubscriptionClick={() => setCurrentView("subscription")} />
 
       <main>
         <AnimatePresence mode="wait">
           {currentView === "home" && (
-            <motion.div
-              key="home"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-            >
+            <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
               <HeroSection />
               <FeaturesSection />
               <HowItWorksSection />
-
-              <section
-                id="simulator"
-                className="py-20 bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100"
-              >
-                <div className="container mx-auto px-4">
-                  <div className="text-center mb-12">
-                    <motion.h2
-                      className="text-5xl md:text-6xl font-bold text-gray-800 mb-6"
-                      initial={{ opacity: 0, y: -30 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.8 }}
-                    >
-                      Try It Now
-                    </motion.h2>
-                    <motion.p
-                      className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed"
-                      initial={{ opacity: 0, y: 30 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ duration: 0.8, delay: 0.2 }}
-                    >
-                      Start exploring your future possibilities with our
-                      AI-powered life simulator
-                    </motion.p>
-                  </div>
-
-                  <LifeChoiceForm
-                    onSubmit={handleSimulationSubmit}
-                    isLoading={isLoading}
-                  />
+              <section id="simulator" className="py-24 bg-stone-50">
+                <div className="max-w-5xl mx-auto px-5">
+                  <LifeChoiceForm onSubmit={handleSimulationSubmit} isLoading={isLoading} />
                 </div>
               </section>
-
               <PricingSection />
               <FooterSection />
             </motion.div>
           )}
 
           {currentView === "results" && simulation && (
-            <motion.div
-              key="results"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="pt-20 pb-20 bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100"
-            >
-              <div className="container mx-auto px-4">
-                <SimulationResults
-                  simulation={simulation}
-                  onNewSimulation={handleNewSimulation}
-                />
+            <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
+              className="pt-20 pb-20 min-h-screen bg-stone-50">
+              <div className="max-w-5xl mx-auto px-5">
+                <SimulationResults simulation={simulation} onNewSimulation={handleNewSimulation} />
               </div>
             </motion.div>
           )}
 
           {currentView === "subscription" && (
-            <motion.div
-              key="subscription"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              className="pt-24 pb-20 bg-gradient-to-br from-purple-100 via-blue-50 to-indigo-100 min-h-screen"
-            >
-              <div className="container mx-auto px-4">
-                <SubscriptionStatus />
+            <motion.div key="subscription" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
+              className="pt-20 pb-20 min-h-screen bg-stone-50">
+              <div className="max-w-5xl mx-auto px-5">
+                <SubscriptionStatus onViewSimulation={handleViewSimulation} />
               </div>
             </motion.div>
           )}
@@ -163,18 +98,9 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => {
   if (!CLERK_PUBLISHABLE_KEY) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-red-600">Missing Clerk publishable key</p>
-      </div>
-    );
+    return <div className="flex items-center justify-center min-h-screen"><p className="text-red-600 text-sm">Missing Clerk publishable key</p></div>;
   }
-
-  return (
-    <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}>
-      <AppContent />
-    </ClerkProvider>
-  );
+  return <ClerkProvider publishableKey={CLERK_PUBLISHABLE_KEY}><AppContent /></ClerkProvider>;
 };
 
 export default App;

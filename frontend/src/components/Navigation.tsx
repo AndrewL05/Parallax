@@ -1,6 +1,7 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
+import { Menu, X } from 'lucide-react';
 
 interface NavigationProps {
   onLogoClick: () => void;
@@ -8,84 +9,92 @@ interface NavigationProps {
 }
 
 const Navigation: React.FC<NavigationProps> = ({ onLogoClick, onSubscriptionClick }) => {
-  const scrollToSection = (sectionId: string) => {
-    if (onLogoClick) {
-      onLogoClick();
-    }
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const scrollTo = (id: string) => {
+    setMobileOpen(false);
+    onLogoClick();
     setTimeout(() => {
-      const element = document.getElementById(sectionId);
-      if (element) {
-        element.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-          inline: 'nearest'
-        });
-      }
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   };
 
   return (
-    <nav className="fixed top-0 w-full bg-white/95 backdrop-blur-md shadow-lg z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          <motion.div
-            className="flex items-center cursor-pointer"
-            onClick={onLogoClick}
-            whileHover={{ scale: 1.05 }}
-          >
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-              Parallax
-            </h1>
-          </motion.div>
+    <nav className={`fixed top-0 w-full z-50 transition-all duration-200 ${
+      scrolled ? 'bg-white/90 backdrop-blur-md border-b border-stone-200' : 'bg-transparent'
+    }`}>
+      <div className="max-w-5xl mx-auto px-5">
+        <div className="flex justify-between items-center h-14">
+          <button onClick={onLogoClick} className="text-lg font-semibold tracking-tight text-stone-900">
+            parallax
+          </button>
 
-          <div className="hidden md:flex items-center space-x-8">
-            <button
-              onClick={() => scrollToSection('features')}
-              className="text-gray-700 hover:text-purple-600 font-medium transition-colors"
-            >
-              Features
-            </button>
-            <button
-              onClick={() => scrollToSection('how-it-works')}
-              className="text-gray-700 hover:text-purple-600 font-medium transition-colors"
-            >
-              How It Works
-            </button>
-            <button
-              onClick={() => scrollToSection('pricing')}
-              className="text-gray-700 hover:text-purple-600 font-medium transition-colors"
-            >
-              Pricing
-            </button>
+          <div className="hidden md:flex items-center gap-6 text-[13px]">
+            {['features', 'pricing'].map((s) => (
+              <button key={s} onClick={() => scrollTo(s)} className="text-stone-500 hover:text-stone-900 transition-colors capitalize">
+                {s}
+              </button>
+            ))}
             <SignedIn>
-              <button
-                onClick={onSubscriptionClick}
-                className="text-gray-700 hover:text-purple-600 font-medium transition-colors"
-              >
-                My Subscription
+              <button onClick={onSubscriptionClick} className="text-stone-500 hover:text-stone-900 transition-colors">
+                Account
               </button>
             </SignedIn>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center gap-3">
             <SignedOut>
               <SignInButton>
-                <motion.button
-                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-300"
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  Sign In
-                </motion.button>
+                <button className="hidden md:block text-[13px] font-medium text-stone-900 hover:text-stone-600 transition-colors">
+                  Sign in
+                </button>
               </SignInButton>
             </SignedOut>
             <SignedIn>
               <UserButton />
             </SignedIn>
+            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-1.5 text-stone-600">
+              {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="md:hidden bg-white border-b border-stone-200"
+          >
+            <div className="px-5 py-3 space-y-1">
+              {['features', 'pricing'].map((s) => (
+                <button key={s} onClick={() => scrollTo(s)} className="block w-full text-left py-2.5 text-sm text-stone-600 hover:text-stone-900 capitalize">
+                  {s}
+                </button>
+              ))}
+              <SignedIn>
+                <button onClick={() => { setMobileOpen(false); onSubscriptionClick?.(); }} className="block w-full text-left py-2.5 text-sm text-stone-600">
+                  Account
+                </button>
+              </SignedIn>
+              <SignedOut>
+                <SignInButton>
+                  <button className="block w-full text-left py-2.5 text-sm font-medium text-stone-900">Sign in</button>
+                </SignInButton>
+              </SignedOut>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 };

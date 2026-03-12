@@ -26,13 +26,13 @@ async def create_life_simulation(
     logger.debug(f"Request dict: {request.dict()}")
 
     db = await get_database()
-    user_id = current_user.get("id") if current_user else None
+    user_id = current_user.get("clerk_id") if current_user else None
     
     try:
         ai_data = await generate_life_simulation(request)
         
         simulation = Simulation(
-            user_id=str(user_id) if user_id else None,
+            user_id=user_id,
             choice_a=request.choice_a,
             choice_b=request.choice_b,
             user_context=request.user_context or UserContext(),
@@ -66,15 +66,12 @@ async def get_user_simulations(current_user: dict = Depends(get_current_user)):
     """Get all simulations for the authenticated user"""
     if not current_user:
         raise HTTPException(status_code=401, detail="Authentication required")
-    
+
     db = await get_database()
-    user_doc = await db.users.find_one({"clerk_id": current_user["clerk_id"]})
-    
-    if not user_doc:
-        raise HTTPException(status_code=404, detail="User not found")
-    
+    clerk_id = current_user["clerk_id"]
+
     simulations = await db.simulations.find(
-        {"user_id": str(user_doc["_id"])}
+        {"user_id": clerk_id}
     ).sort("created_at", -1).limit(50).to_list(50)
     
     return [
@@ -104,8 +101,7 @@ async def get_simulation(
     
     # Check access permissions
     if simulation.get("user_id") and current_user:
-        user_doc = await db.users.find_one({"clerk_id": current_user["clerk_id"]})
-        if not user_doc or str(user_doc["_id"]) != simulation["user_id"]:
+        if current_user["clerk_id"] != simulation["user_id"]:
             if not simulation.get("is_public", False):
                 raise HTTPException(status_code=403, detail="Access denied")
     elif simulation.get("user_id") and not current_user:

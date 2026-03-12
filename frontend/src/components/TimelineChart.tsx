@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import * as d3 from 'd3';
 import type { TimelinePoint } from '../types/api';
 
@@ -9,263 +9,110 @@ interface TimelineChartProps {
 }
 
 const TimelineChart: React.FC<TimelineChartProps> = ({ data, title, color }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
+  const [dims, setDims] = useState({ w: 0, h: 0 });
 
   useEffect(() => {
-    if (!data || data.length === 0) return;
+    const el = containerRef.current;
+    if (!el) return;
+    const obs = new ResizeObserver((entries) => {
+      const w = entries[0].contentRect.width;
+      setDims({ w, h: Math.min(300, w * 0.5) });
+    });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!data?.length || !dims.w) return;
 
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
-    const margin = { top: 40, right: 80, bottom: 60, left: 80 };
-    const width = 600 - margin.left - margin.right;
-    const height = 350 - margin.bottom - margin.top;
+    const m = { top: 16, right: 48, bottom: 32, left: 52 };
+    const w = dims.w - m.left - m.right;
+    const h = dims.h - m.top - m.bottom;
+    if (w <= 0 || h <= 0) return;
 
-    const g = svg.append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
+    const g = svg.append("g").attr("transform", `translate(${m.left},${m.top})`);
 
-    // Scales
-    const xScale = d3.scaleLinear()
-      .domain([1, 10])
-      .range([0, width]);
+    const x = d3.scaleLinear().domain([1, 10]).range([0, w]);
+    const y = d3.scaleLinear().domain([0, (d3.max(data, d => d.salary || 0) || 1) * 1.12]).range([h, 0]);
+    const yH = d3.scaleLinear().domain([0, 10]).range([h, 0]);
 
-    const yScale = d3.scaleLinear()
-      .domain([0, (d3.max(data, d => d.salary || 0) || 0) * 1.1])
-      .range([height, 0]);
+    // Grid
+    g.append("g").call(d3.axisLeft(y).tickSize(-w).tickFormat(() => ""))
+      .call(g => g.select(".domain").remove())
+      .call(g => g.selectAll(".tick line").attr("stroke", "#f5f5f4").attr("stroke-dasharray", "2,2"));
 
-    const happinessScale = d3.scaleLinear()
-      .domain([0, 10])
-      .range([height, 0]);
+    // X axis
+    g.append("g").attr("transform", `translate(0,${h})`)
+      .call(d3.axisBottom(x).ticks(10).tickFormat(d => `${d}`))
+      .call(g => g.select(".domain").attr("stroke", "#e7e5e4"))
+      .selectAll("text").style("font-size", "10px").style("fill", "#a8a29e");
 
-    // Line generators
-    const salaryLine = d3.line<TimelinePoint>()
-      .x(d => xScale(d.year))
-      .y(d => yScale(d.salary || 0))
-      .curve(d3.curveMonotoneX);
+    // Y axis salary
+    g.append("g").call(d3.axisLeft(y).ticks(5).tickFormat(d => `$${((d as number) / 1000).toFixed(0)}k`))
+      .call(g => g.select(".domain").remove())
+      .selectAll("text").style("font-size", "10px").style("fill", "#a8a29e");
 
-    const happinessLine = d3.line<TimelinePoint>()
-      .x(d => xScale(d.year))
-      .y(d => happinessScale(d.happiness_score))
-      .curve(d3.curveMonotoneX);
+    // Y axis happiness
+    g.append("g").attr("transform", `translate(${w},0)`)
+      .call(d3.axisRight(yH).ticks(5).tickFormat(d => `${d}`))
+      .call(g => g.select(".domain").remove())
+      .selectAll("text").style("font-size", "10px").style("fill", "#d6d3d1");
 
-    // Add grid lines
-    g.append("g")
-      .attr("class", "grid")
-      .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(xScale)
-        .tickSize(-height)
-        .tickFormat(() => "")
-      )
-      .style("stroke-dasharray", "3,3")
-      .style("opacity", 0.3);
+    // Area
+    const gradId = `a-${title.replace(/\s/g, '')}`;
+    const defs = g.append("defs");
+    const grad = defs.append("linearGradient").attr("id", gradId)
+      .attr("gradientUnits", "userSpaceOnUse").attr("x1", 0).attr("y1", h).attr("x2", 0).attr("y2", 0);
+    grad.append("stop").attr("offset", "0%").attr("stop-color", color).attr("stop-opacity", 0);
+    grad.append("stop").attr("offset", "100%").attr("stop-color", color).attr("stop-opacity", 0.08);
 
-    g.append("g")
-      .attr("class", "grid")
-      .call(d3.axisLeft(yScale)
-        .tickSize(-width)
-        .tickFormat(() => "")
-      )
-      .style("stroke-dasharray", "3,3")
-      .style("opacity", 0.3);
+    g.append("path").datum(data)
+      .attr("fill", `url(#${gradId})`)
+      .attr("d", d3.area<TimelinePoint>().x(d => x(d.year)).y0(h).y1(d => y(d.salary || 0)).curve(d3.curveMonotoneX));
 
-    // Add axes
-    g.append("g")
-      .attr("transform", `translate(0,${height})`)
-      .call(d3.axisBottom(xScale)
-        .tickFormat(d => `Year ${d}`)
-      )
-      .selectAll("text")
-      .style("font-size", "12px")
-      .style("fill", "#6B7280");
+    // Salary line
+    g.append("path").datum(data)
+      .attr("fill", "none").attr("stroke", color).attr("stroke-width", 2)
+      .attr("d", d3.line<TimelinePoint>().x(d => x(d.year)).y(d => y(d.salary || 0)).curve(d3.curveMonotoneX));
 
-    g.append("g")
-      .call(d3.axisLeft(yScale)
-        .tickFormat(d => `$${((d as number)/1000)}k`)
-      )
-      .selectAll("text")
-      .style("font-size", "12px")
-      .style("fill", "#6B7280");
+    // Happiness line
+    g.append("path").datum(data)
+      .attr("fill", "none").attr("stroke", "#d6d3d1").attr("stroke-width", 1)
+      .attr("stroke-dasharray", "3,3")
+      .attr("d", d3.line<TimelinePoint>().x(d => x(d.year)).y(d => yH(d.happiness_score)).curve(d3.curveMonotoneX));
 
-    // Add happiness axis on the right
-    g.append("g")
-      .attr("transform", `translate(${width},0)`)
-      .call(d3.axisRight(happinessScale)
-        .tickFormat(d => `${d}/10`)
-      )
-      .selectAll("text")
-      .style("font-size", "12px")
-      .style("fill", "#EF4444");
-
-    // Add salary line with gradient
-    const gradient = g.append("defs")
-      .append("linearGradient")
-      .attr("id", `gradient-${title.replace(/\s/g, '')}`)
-      .attr("gradientUnits", "userSpaceOnUse")
-      .attr("x1", 0).attr("y1", height)
-      .attr("x2", 0).attr("y2", 0);
-
-    gradient.append("stop")
-      .attr("offset", "0%")
-      .attr("stop-color", color)
-      .attr("stop-opacity", 0.1);
-
-    gradient.append("stop")
-      .attr("offset", "100%")
-      .attr("stop-color", color)
-      .attr("stop-opacity", 0.8);
-
-    // Add area under salary line
-    const area = d3.area<TimelinePoint>()
-      .x(d => xScale(d.year))
-      .y0(height)
-      .y1(d => yScale(d.salary || 0))
-      .curve(d3.curveMonotoneX);
-
-    g.append("path")
-      .datum(data)
-      .attr("fill", `url(#gradient-${title.replace(/\s/g, '')})`)
-      .attr("d", area);
-
-    // Add salary line
-    g.append("path")
-      .datum(data)
-      .attr("fill", "none")
-      .attr("stroke", color)
-      .attr("stroke-width", 3)
-      .attr("d", salaryLine);
-
-    // Add happiness line
-    g.append("path")
-      .datum(data)
-      .attr("fill", "none")
-      .attr("stroke", "#EF4444")
-      .attr("stroke-width", 2)
-      .attr("stroke-dasharray", "5,5")
-      .attr("d", happinessLine);
-
-    // Add data points
-    g.selectAll(".salary-dot")
-      .data(data)
-      .enter().append("circle")
-      .attr("class", "salary-dot")
-      .attr("cx", d => xScale(d.year))
-      .attr("cy", d => yScale(d.salary || 0))
-      .attr("r", 5)
-      .attr("fill", color)
-      .attr("stroke", "white")
-      .attr("stroke-width", 2)
+    // Dots
+    g.selectAll(".sd").data(data).enter().append("circle")
+      .attr("cx", d => x(d.year)).attr("cy", d => y(d.salary || 0))
+      .attr("r", 3.5).attr("fill", color).attr("stroke", "white").attr("stroke-width", 1.5)
       .style("cursor", "pointer")
-      .on("mouseover", function(event: MouseEvent, d: TimelinePoint) {
-        // Create tooltip
-        const tooltip = d3.select("body").append("div")
-          .attr("class", "d3-tooltip")
-          .style("position", "absolute")
-          .style("background", "rgba(0, 0, 0, 0.8)")
-          .style("color", "white")
-          .style("padding", "8px")
-          .style("border-radius", "4px")
-          .style("font-size", "12px")
-          .style("pointer-events", "none")
-          .style("opacity", 0);
-
-        tooltip.transition()
-          .duration(200)
-          .style("opacity", 1);
-
-        tooltip.html(`
-          <strong>Year ${d.year}</strong><br/>
-          Salary: $${d.salary?.toLocaleString()}<br/>
-          Happiness: ${d.happiness_score}/10<br/>
-          ${d.major_event ? `Event: ${d.major_event}` : ''}
-        `)
-          .style("left", (event.pageX + 10) + "px")
-          .style("top", (event.pageY - 28) + "px");
+      .on("mouseover", (event: MouseEvent, d: TimelinePoint) => {
+        d3.select("body").selectAll(".d3-tooltip").remove();
+        const tip = d3.select("body").append("div").attr("class", "d3-tooltip").style("opacity", 0);
+        tip.transition().duration(120).style("opacity", 1);
+        tip.html(
+          `<strong>Year ${d.year}</strong><br/>$${d.salary?.toLocaleString()}<br/>${d.happiness_score}/10 happiness` +
+          (d.major_event ? `<br/><span style="color:#a8a29e">${d.major_event}</span>` : '')
+        ).style("left", `${event.pageX + 10}px`).style("top", `${event.pageY - 10}px`);
       })
-      .on("mouseout", function() {
-        d3.selectAll(".d3-tooltip").remove();
-      });
+      .on("mouseout", () => d3.selectAll(".d3-tooltip").remove());
 
-    // Add happiness dots
-    g.selectAll(".happiness-dot")
-      .data(data)
-      .enter().append("circle")
-      .attr("class", "happiness-dot")
-      .attr("cx", d => xScale(d.year))
-      .attr("cy", d => happinessScale(d.happiness_score))
-      .attr("r", 4)
-      .attr("fill", "#EF4444")
-      .attr("stroke", "white")
-      .attr("stroke-width", 2);
+    g.selectAll(".hd").data(data).enter().append("circle")
+      .attr("cx", d => x(d.year)).attr("cy", d => yH(d.happiness_score))
+      .attr("r", 2.5).attr("fill", "#d6d3d1").attr("stroke", "white").attr("stroke-width", 1);
 
-    // Add labels with better positioning
-    g.append("text")
-      .attr("transform", "rotate(-90)")
-      .attr("y", 0 - margin.left + 20)
-      .attr("x", 0 - (height / 2))
-      .attr("dy", "1em")
-      .style("text-anchor", "middle")
-      .style("font-size", "14px")
-      .style("font-weight", "bold")
-      .style("fill", color)
-      .text("Annual Salary");
+  }, [data, title, color, dims]);
 
-    g.append("text")
-      .attr("transform", `translate(${width + margin.right - 20}, ${height / 2}) rotate(90)`)
-      .style("text-anchor", "middle")
-      .style("font-size", "14px")
-      .style("font-weight", "bold")
-      .style("fill", "#EF4444")
-      .text("Happiness Score");
-
-    g.append("text")
-      .attr("x", width / 2)
-      .attr("y", 0 - 10)
-      .attr("text-anchor", "middle")
-      .style("font-size", "18px")
-      .style("font-weight", "bold")
-      .style("fill", "#374151")
-      .text(title);
-
-    // Add legend
-    const legend = g.append("g")
-      .attr("transform", `translate(${width - 140}, 20)`);
-
-    legend.append("line")
-      .attr("x1", 0)
-      .attr("x2", 20)
-      .attr("y1", 0)
-      .attr("y2", 0)
-      .attr("stroke", color)
-      .attr("stroke-width", 3);
-
-    legend.append("text")
-      .attr("x", 25)
-      .attr("y", 0)
-      .attr("dy", "0.35em")
-      .style("font-size", "12px")
-      .style("fill", "#374151")
-      .text("Salary");
-
-    legend.append("line")
-      .attr("x1", 0)
-      .attr("x2", 20)
-      .attr("y1", 20)
-      .attr("y2", 20)
-      .attr("stroke", "#EF4444")
-      .attr("stroke-width", 2)
-      .attr("stroke-dasharray", "5,5");
-
-    legend.append("text")
-      .attr("x", 25)
-      .attr("y", 20)
-      .attr("dy", "0.35em")
-      .style("font-size", "12px")
-      .style("fill", "#374151")
-      .text("Happiness");
-
-  }, [data, title, color]);
-
-  return <svg ref={svgRef} width="600" height="350" className="timeline-chart"></svg>;
+  return (
+    <div ref={containerRef} className="w-full">
+      <svg ref={svgRef} width={dims.w} height={dims.h} viewBox={`0 0 ${dims.w} ${dims.h}`} />
+    </div>
+  );
 };
 
 export default TimelineChart;
