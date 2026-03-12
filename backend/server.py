@@ -30,6 +30,10 @@ app.add_middleware(
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
+    if request.method == "OPTIONS":
+        response = await call_next(request)
+        return response
+
     if request.url.path == "/api/simulate":
         logger.info(f"Request method: {request.method}")
         logger.info(f"Request path: {request.url.path}")
