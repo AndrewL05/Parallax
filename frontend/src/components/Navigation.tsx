@@ -27,23 +27,29 @@ const Navigation: React.FC<NavigationProps> = ({ onLogoClick, onSubscriptionClic
   };
 
   return (
-    <nav className={`fixed top-0 w-full z-50 transition-all duration-200 ${
+    <nav className={`fixed top-0 w-full z-50 transition-colors duration-200 ${
       scrolled ? 'bg-white/90 backdrop-blur-md border-b border-stone-200' : 'bg-transparent'
     }`}>
       <div className="max-w-5xl mx-auto px-5">
         <div className="flex justify-between items-center h-14">
-          <button onClick={onLogoClick} className="text-lg font-semibold tracking-tight text-stone-900">
+          <button onClick={onLogoClick} className={`font-display text-xl tracking-tight italic transition-colors ${
+            scrolled ? 'text-stone-900' : 'text-white'
+          }`}>
             parallax
           </button>
 
           <div className="hidden md:flex items-center gap-6 text-[13px]">
             {['features', 'pricing'].map((s) => (
-              <button key={s} onClick={() => scrollTo(s)} className="text-stone-500 hover:text-stone-900 transition-colors capitalize">
+              <button key={s} onClick={() => scrollTo(s)} className={`hover:text-stone-900 transition-colors capitalize ${
+                scrolled ? 'text-stone-500' : 'text-stone-400 hover:text-white'
+              }`}>
                 {s}
               </button>
             ))}
             <SignedIn>
-              <button onClick={onSubscriptionClick} className="text-stone-500 hover:text-stone-900 transition-colors">
+              <button onClick={onSubscriptionClick} className={`hover:text-stone-900 transition-colors ${
+                scrolled ? 'text-stone-500' : 'text-stone-400 hover:text-white'
+              }`}>
                 Account
               </button>
             </SignedIn>
@@ -52,7 +58,9 @@ const Navigation: React.FC<NavigationProps> = ({ onLogoClick, onSubscriptionClic
           <div className="flex items-center gap-3">
             <SignedOut>
               <SignInButton>
-                <button className="hidden md:block text-[13px] font-medium text-stone-900 hover:text-stone-600 transition-colors">
+                <button className={`hidden md:block text-[13px] font-medium transition-colors ${
+                  scrolled ? 'text-stone-900 hover:text-stone-600' : 'text-white hover:text-stone-300'
+                }`}>
                   Sign in
                 </button>
               </SignInButton>
@@ -60,7 +68,9 @@ const Navigation: React.FC<NavigationProps> = ({ onLogoClick, onSubscriptionClic
             <SignedIn>
               <UserButton />
             </SignedIn>
-            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden p-1.5 text-stone-600">
+            <button onClick={() => setMobileOpen(!mobileOpen)} className={`md:hidden p-1.5 ${
+              scrolled ? 'text-stone-600' : 'text-white'
+            }`}>
               {mobileOpen ? <X size={18} /> : <Menu size={18} />}
             </button>
           </div>

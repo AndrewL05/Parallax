@@ -48,8 +48,8 @@ const LifeChoiceForm: React.FC<LifeChoiceFormProps> = ({ onSubmit, isLoading }) 
     });
   };
 
-  const input = "w-full px-4 py-3 bg-white border-2 border-stone-300 rounded-xl text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-100 transition-colors";
-  const select = "w-full px-4 py-3 bg-white border-2 border-stone-300 rounded-xl text-sm text-stone-900 focus:outline-none focus:border-stone-900 focus:ring-2 focus:ring-stone-100 transition-colors appearance-none cursor-pointer";
+  const input = "w-full px-4 py-3 bg-white border border-stone-200 rounded-xl text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-100 transition-colors shadow-elevated";
+  const select = "w-full px-4 py-3 bg-white border border-stone-200 rounded-xl text-sm text-stone-900 focus:outline-none focus:border-stone-400 focus:ring-2 focus:ring-stone-100 transition-colors appearance-none cursor-pointer shadow-elevated";
 
   return (
     <motion.form
@@ -59,7 +59,7 @@ const LifeChoiceForm: React.FC<LifeChoiceFormProps> = ({ onSubmit, isLoading }) 
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <h2 className="text-3xl sm:text-4xl font-bold text-stone-900 mb-2">
+      <h2 className="font-display text-3xl sm:text-4xl text-stone-900 mb-2">
         Run a simulation
       </h2>
       <p className="text-stone-400 text-sm mb-12">
@@ -68,7 +68,7 @@ const LifeChoiceForm: React.FC<LifeChoiceFormProps> = ({ onSubmit, isLoading }) 
 
       {/* Context */}
       <div className="mb-12">
-        <p className="text-xs tracking-widest uppercase text-stone-400 mb-6">Your background</p>
+        <p className="text-xs tracking-[0.2em] uppercase text-stone-400 mb-6 font-medium">Your background</p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3">
           <input type="number" placeholder="Age" value={userContext.age}
             onChange={(e) => setUserContext({ ...userContext, age: e.target.value })} className={input} />
@@ -88,11 +88,12 @@ const LifeChoiceForm: React.FC<LifeChoiceFormProps> = ({ onSubmit, isLoading }) 
       </div>
 
       {/* Paths */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
-        <div>
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-2 h-2 rounded-full bg-blue-500" />
-            <p className="text-xs tracking-widest uppercase text-stone-400">Path A</p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+        {/* Path A */}
+        <div className="bg-white rounded-2xl p-6 border border-blue-100 shadow-elevated">
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+            <p className="text-xs tracking-[0.2em] uppercase text-stone-500 font-medium">Path A</p>
           </div>
           <input type="text" placeholder="Job title or life choice" value={choiceA.title}
             onChange={(e) => setChoiceA({ ...choiceA, title: e.target.value })} className={input} required />
@@ -105,10 +106,11 @@ const LifeChoiceForm: React.FC<LifeChoiceFormProps> = ({ onSubmit, isLoading }) 
           </select>
         </div>
 
-        <div>
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-2 h-2 rounded-full bg-emerald-500" />
-            <p className="text-xs tracking-widest uppercase text-stone-400">Path B</p>
+        {/* Path B */}
+        <div className="bg-white rounded-2xl p-6 border border-emerald-100 shadow-elevated">
+          <div className="flex items-center gap-2 mb-5">
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+            <p className="text-xs tracking-[0.2em] uppercase text-stone-500 font-medium">Path B</p>
           </div>
           <input type="text" placeholder="Job title or life choice" value={choiceB.title}
             onChange={(e) => setChoiceB({ ...choiceB, title: e.target.value })} className={input} required />
@@ -123,14 +125,16 @@ const LifeChoiceForm: React.FC<LifeChoiceFormProps> = ({ onSubmit, isLoading }) 
       </div>
 
       {/* Submit */}
-      <button
+      <motion.button
         type="submit"
         disabled={isLoading || !choiceA.title || !choiceB.title}
-        className={`w-full py-3.5 rounded-xl text-sm font-medium transition-colors ${
+        className={`w-full py-4 rounded-xl text-sm font-semibold transition-colors ${
           isLoading || !choiceA.title || !choiceB.title
-            ? "bg-stone-200 text-stone-500 border-2 border-stone-300 cursor-not-allowed"
-            : "bg-stone-950 text-white hover:bg-stone-800 active:scale-[0.99]"
+            ? "bg-stone-200 text-stone-400 cursor-not-allowed"
+            : "bg-stone-950 text-white hover:bg-stone-800 active:bg-stone-900"
         }`}
+        whileHover={!(isLoading || !choiceA.title || !choiceB.title) ? { scale: 1.01 } : {}}
+        whileTap={!(isLoading || !choiceA.title || !choiceB.title) ? { scale: 0.99 } : {}}
       >
         {isLoading ? (
           <span className="flex items-center justify-center gap-2">
@@ -142,7 +146,7 @@ const LifeChoiceForm: React.FC<LifeChoiceFormProps> = ({ onSubmit, isLoading }) 
         ) : (
           "Simulate"
         )}
-      </button>
+      </motion.button>
     </motion.form>
   );
 };

@@ -63,7 +63,7 @@ const AppContent: React.FC = () => {
               <HeroSection />
               <FeaturesSection />
               <HowItWorksSection />
-              <section id="simulator" className="py-24 bg-stone-50">
+              <section id="simulator" className="py-20 bg-stone-100/50 border-y border-stone-200/60">
                 <div className="max-w-5xl mx-auto px-5">
                   <LifeChoiceForm onSubmit={handleSimulationSubmit} isLoading={isLoading} />
                 </div>

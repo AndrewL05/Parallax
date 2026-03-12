@@ -4,7 +4,7 @@
 
 /* Chart */
 .timeline-chart text {
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'DM Sans', system-ui, sans-serif;
 }
 
 .timeline-chart .domain {
@@ -20,7 +20,7 @@
   position: absolute;
   padding: 10px 14px;
   font-size: 13px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'DM Sans', sans-serif;
   background: #0a0a0a;
   color: #fafaf9;
   border-radius: 8px;
