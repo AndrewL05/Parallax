@@ -16,12 +16,6 @@ export const useSimulation = () => {
       setError(null);
 
       try {
-        console.log("📤 Raw form data received:", formData);
-        console.log(
-          "📤 Sending simulation data:",
-          JSON.stringify(formData, null, 2)
-        );
-
         // Validate data structure before sending
         if (!formData.choice_a || !formData.choice_b) {
           throw new Error("Missing choice_a or choice_b");
