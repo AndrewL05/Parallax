@@ -4,9 +4,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-mongo_url = os.environ['MONGO_URL']
+mongo_url = os.getenv('MONGO_URL', os.getenv('MONGODB_URL', 'mongodb://localhost:27017'))
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+db = client[os.getenv('DB_NAME', os.getenv('DATABASE_NAME', 'parallax'))]
 
 async def get_database():
     """Get database connection"""
