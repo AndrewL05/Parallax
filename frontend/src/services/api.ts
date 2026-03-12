@@ -63,16 +63,6 @@ class ApiService {
       ...headers,
     };
 
-    console.log("🔍 API POST Debug:", {
-      endpoint,
-      data,
-      dataType: typeof data,
-      isArray: Array.isArray(data),
-      serialized: JSON.stringify(data),
-      originalHeaders: headers,
-      mergedHeaders,
-    });
-
     return this.request<T>(endpoint, {
       method: "POST",
       headers: mergedHeaders,
