@@ -1,45 +1,58 @@
 # Parallax
 
-A life simulation application that uses AI to help users compare different life choices and visualize their potential outcomes over a 10-year timeline.
+A life simulation application that uses AI and machine learning to help users compare different life choices and visualize their potential outcomes over a 10-year timeline.
+
+**Live Demo**: [myparallax.vercel.app](https://myparallax.vercel.app)
 
 ## Features
 
 - **AI-Powered Life Simulations**: Generate realistic 10-year projections for major life decisions
-- **Interactive Timeline Visualization**: Explore simulation results with D3-powered data visualizations
+- **ML Prediction Engine**: XGBoost and TensorFlow models for career and salary predictions
+- **Monte Carlo Simulations**: Statistical scenario modeling for outcome distributions
+- **Interactive Timeline Visualization**: Explore simulation results with data visualizations
 - **User Authentication**: Secure login and profile management with Clerk
-- **Freemium Model**: Free tier with 3 simulations per week, premium tier with unlimited access
+- **Freemium Model**: Free tier with limited simulations, premium tier with unlimited access
 - **Payment Processing**: Secure payments handled through Stripe integration
-- **Responsive Design**: Modern React interface with smooth animations
+- **Responsive Design**: Modern React interface with Framer Motion animations
 
 ## Tech Stack
 
 ### Frontend
 
-- React
+- React + TypeScript
 - Tailwind CSS
-- D3.js
-- Clerk
+- Clerk (auth)
 - Stripe.js
 
 ### Backend
 
-- Python (FastAPI)
-- MongoDB
+- Python 
+- FastAPI
+- MongoDB 
 - Stripe
+
+### ML Pipeline
+
+- XGBoost
+- TensorFlow / Keras
+- scikit-learn
 
 ### DevOps & Infrastructure
 
 - Docker
-- nginx
+- NGINX
+- Vercel (frontend)
+- Railway (backend)
 
 ## Quick Start
 
 ### Prerequisites
 
 - Node.js 18+
-- Python 3.8+
-- MongoDB instance
+- Python 3.11+
+- MongoDB Atlas instance
 - OpenRouter API key
+- Clerk account
 - Stripe account
 
 ### Environment Setup
@@ -49,18 +62,20 @@ Create environment files:
 **Frontend (`frontend/.env`):**
 
 ```env
+VITE_BACKEND_URL=http://localhost:8000
 VITE_CLERK_PUBLISHABLE_KEY=your_clerk_key
-VITE_API_URL=http://localhost:8000
-VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_key
+VITE_REACT_APP_STRIPE_PUBLISHABLE_KEY=your_stripe_key
 ```
 
 **Backend (`backend/.env`):**
 
 ```env
-MONGODB_URI=your_mongodb_connection_string
+MONGO_URL=your_mongodb_connection_string
+DB_NAME=parallax
 OPENROUTER_API_KEY=your_openrouter_key
 STRIPE_SECRET_KEY=your_stripe_secret_key
-CLERK_SECRET_KEY=your_clerk_secret_key
+CLERK_JWKS_URL=https://your-clerk-instance.clerk.accounts.dev/.well-known/jwks.json
+CORS_ORIGINS=http://localhost:5173
 ```
 
 ### Installation & Development
@@ -68,7 +83,7 @@ CLERK_SECRET_KEY=your_clerk_secret_key
 1. **Clone the repository**
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/AndrewL05/Parallax.git
    cd Parallax
    ```
 
@@ -76,7 +91,7 @@ CLERK_SECRET_KEY=your_clerk_secret_key
 
    ```bash
    cd frontend
-   npm install
+   yarn install
    ```
 
 3. **Install backend dependencies**
@@ -92,28 +107,25 @@ CLERK_SECRET_KEY=your_clerk_secret_key
 
    ```bash
    cd backend
-   python server.py
+   uvicorn server:app --reload --port 8000
    ```
 
-   Frontend (runs on port 3000):
+   Frontend (runs on port 5173):
 
    ```bash
    cd frontend
-   npm run dev
+   yarn dev
    ```
+
+### Docker
+
+```bash
+docker-compose up --build
+```
 
 ### Testing
 
-Run the comprehensive backend test suite:
-
 ```bash
-python backend_test.py
+cd backend
+python -m pytest tests/ -v
 ```
-
-The test suite validates:
-
-- API health endpoints
-- MongoDB connectivity and SSL/TLS configuration
-- AI simulation functionality with realistic data
-- User simulation retrieval
-- Stripe payment integration
