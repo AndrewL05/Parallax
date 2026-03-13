@@ -18,15 +18,12 @@ from routes.premium import router as premium_router
 from routes.ml_scenarios import router as ml_scenarios_router
 from database import init_database, close_database
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 app = FastAPI(title=API_TITLE, version=API_VERSION)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=CORS_ORIGINS,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+logger.info(f"CORS origins configured: {CORS_ORIGINS}")
 
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -43,8 +40,13 @@ async def log_requests(request: Request, call_next):
     response = await call_next(request)
     return response
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
