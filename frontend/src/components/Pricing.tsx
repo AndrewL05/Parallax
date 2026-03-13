@@ -83,9 +83,7 @@ const PricingSection: React.FC = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.4, delay: 0.1 }}
           >
-            {/* Accent border top */}
-            <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-accent-400 via-accent-500 to-accent-600" />
-
+            
             <div className="flex items-baseline gap-1 mb-1">
               <span className="text-3xl font-bold font-display">$4.99</span>
               <span className="text-sm text-stone-500">/mo</span>
