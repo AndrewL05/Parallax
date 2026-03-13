@@ -19,18 +19,17 @@ A life simulation application that uses AI and machine learning to help users co
 
 ### Frontend
 
-- React 19 + TypeScript
-- Vite
+- React + TypeScript
 - Tailwind CSS
-- Framer Motion
 - Clerk (auth)
 - Stripe.js
 
 ### Backend
 
-- Python 3.11+ (FastAPI)
-- MongoDB Atlas (Motor async driver)
-- Pydantic
+- Python 
+- FastAPI
+- MongoDB 
+- Stripe
 
 ### ML Pipeline
 
@@ -38,13 +37,10 @@ A life simulation application that uses AI and machine learning to help users co
 - TensorFlow / Keras
 - scikit-learn
 
-### AI
-
-- OpenRouter API (Claude, GPT-4)
-
 ### DevOps & Infrastructure
 
 - Docker
+- NGINX
 - Vercel (frontend)
 - Railway (backend)
 
