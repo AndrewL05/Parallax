@@ -2,8 +2,6 @@
 
 A life simulation application that uses AI and machine learning to help users compare different life choices and visualize their potential outcomes over a 10-year timeline.
 
-**Live Demo**: [myparallax.vercel.app](https://myparallax.vercel.app)
-
 ## Features
 
 - **AI-Powered Life Simulations**: Generate realistic 10-year projections for major life decisions
@@ -13,7 +11,9 @@ A life simulation application that uses AI and machine learning to help users co
 - **User Authentication**: Secure login and profile management with Clerk
 - **Freemium Model**: Free tier with limited simulations, premium tier with unlimited access
 - **Payment Processing**: Secure payments handled through Stripe integration
-- **Responsive Design**: Modern React interface with Framer Motion animations
+
+> ⚠️ **Project Status**
+> Parallax is currently under active development. Some features may be incomplete or undergoing improvements as the app evolves. 
 
 ## Tech Stack
 
@@ -22,7 +22,7 @@ A life simulation application that uses AI and machine learning to help users co
 - React + TypeScript
 - Tailwind CSS
 - Clerk (auth)
-- Stripe.js
+- D3.js
 
 ### Backend
 
