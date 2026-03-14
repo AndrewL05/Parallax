@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends, Request
+from fastapi import APIRouter, HTTPException, Depends
 from typing import Optional
 import logging
 from datetime import datetime
@@ -9,6 +9,7 @@ from database import get_database
 from auth import get_current_user
 from services.stripe_service import create_stripe_checkout, get_stripe_payment_status
 from services.subscription_service import SubscriptionService
+from config import FRONTEND_URL
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/payments", tags=["payments"])
@@ -20,7 +21,6 @@ PACKAGES = {
 
 @router.post("/checkout")
 async def create_checkout_session(
-    request: Request,
     package: str,
     current_user: Optional[dict] = Depends(get_current_user)
 ):
@@ -32,16 +32,14 @@ async def create_checkout_session(
     db = await get_database()
     
     try:
-        origin_url = str(request.base_url).rstrip('/')
-        if origin_url.endswith('/api'):
-            origin_url = origin_url[:-4]
-        
+        frontend_url = FRONTEND_URL.rstrip('/')
+
         # Create checkout session
         session_data = await create_stripe_checkout(
             amount=package_info["amount"],
             currency="usd",
-            success_url=f"{origin_url}/success?session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{origin_url}",
+            success_url=f"{frontend_url}/success?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{frontend_url}",
             metadata={
                 "package": package,
                 "user_id": str(current_user.get("clerk_id")) if current_user else "anonymous"
