@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { motion, AnimatePresence } from "framer-motion";
 import "./App.css";
@@ -23,7 +23,14 @@ const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 type ViewType = "home" | "results" | "subscription";
 
 const AppContent: React.FC = () => {
-  const [currentView, setCurrentView] = useState<ViewType>("home");
+  const [currentView, setCurrentView] = useState<ViewType>(() => {
+    // handle Stripe redirect: /success → show subscription page
+    if (window.location.pathname === "/success") {
+      window.history.replaceState({}, "", "/");
+      return "subscription";
+    }
+    return "home";
+  });
   const {} = useAuth();
   const { simulation, isLoading, createSimulation, resetSimulation, setSimulation } = useSimulation();
 
