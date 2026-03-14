@@ -25,6 +25,9 @@ def get_cors_origins() -> List[str]:
 
 CORS_ORIGINS = get_cors_origins()
 
+# Frontend URL (for Stripe redirect URLs, etc.)
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
 # OpenRouter / LLM Configuration
 OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
