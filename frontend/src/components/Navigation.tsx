@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
+
+const AccountIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="5" width="20" height="14" rx="2" />
+    <line x1="2" y1="10" x2="22" y2="10" />
+  </svg>
+);
 
 interface NavigationProps {
   onLogoClick: () => void;
@@ -13,6 +20,7 @@ const Navigation: React.FC<NavigationProps> = ({ onLogoClick, onSubscriptionClic
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
   const isHome = location.pathname === '/';
   const light = scrolled || !isHome;
 
@@ -54,13 +62,6 @@ const Navigation: React.FC<NavigationProps> = ({ onLogoClick, onSubscriptionClic
                 {s}
               </button>
             ))}
-            <SignedIn>
-              <button onClick={onSubscriptionClick} className={`hover:text-stone-900 transition-colors ${
-                light ? 'text-stone-500' : 'text-stone-400 hover:text-white'
-              }`}>
-                Account
-              </button>
-            </SignedIn>
           </div>
 
           <div className="flex items-center gap-3">
@@ -74,7 +75,15 @@ const Navigation: React.FC<NavigationProps> = ({ onLogoClick, onSubscriptionClic
               </SignInButton>
             </SignedOut>
             <SignedIn>
-              <UserButton />
+              <UserButton>
+                <UserButton.MenuItems>
+                  <UserButton.Action
+                    label="Account"
+                    labelIcon={<AccountIcon />}
+                    onClick={() => navigate('/account')}
+                  />
+                </UserButton.MenuItems>
+              </UserButton>
             </SignedIn>
             <button onClick={() => setMobileOpen(!mobileOpen)} className={`md:hidden p-1.5 ${
               light ? 'text-stone-600' : 'text-white'
