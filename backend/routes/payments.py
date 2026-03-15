@@ -25,12 +25,21 @@ async def create_checkout_session(
     current_user: Optional[dict] = Depends(get_current_user)
 ):
     """Create Stripe checkout session for premium subscription"""
+    if not current_user:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
     if package not in PACKAGES:
         raise HTTPException(status_code=400, detail="Invalid package")
-    
+
+    # Check if user already has premium
+    user_id = current_user.get("clerk_id")
+    subscription = await SubscriptionService.get_user_subscription(user_id)
+    if subscription.tier == "premium" and subscription.status == "active":
+        raise HTTPException(status_code=400, detail="You already have an active premium subscription")
+
     package_info = PACKAGES[package]
     db = await get_database()
-    
+
     try:
         frontend_url = FRONTEND_URL.rstrip('/')
 
