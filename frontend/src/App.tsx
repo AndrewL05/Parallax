@@ -15,6 +15,7 @@ import SubscriptionStatus from "./components/SubscriptionStatus";
 
 import { useAuth } from "./hooks/useAuth";
 import { useSimulation } from "./hooks/useSimulation";
+import { stripeService } from "./services/stripeService";
 
 import type { SimulationFormData } from "./types/simulation";
 
@@ -23,16 +24,35 @@ const CLERK_PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 type ViewType = "home" | "results" | "subscription";
 
 const AppContent: React.FC = () => {
+  const [paymentKey, setPaymentKey] = useState(0);
   const [currentView, setCurrentView] = useState<ViewType>(() => {
-    // handle Stripe redirect: /success → show subscription page
     if (window.location.pathname === "/success") {
-      window.history.replaceState({}, "", "/");
       return "subscription";
     }
     return "home";
   });
   const {} = useAuth();
   const { simulation, isLoading, createSimulation, resetSimulation, setSimulation } = useSimulation();
+
+  // Handle Stripe redirect: verify payment, upgrade subscription, then refresh status
+  useEffect(() => {
+    if (window.location.pathname === "/success") {
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get("session_id");
+      window.history.replaceState({}, "", "/");
+
+      if (sessionId) {
+        stripeService.pollPaymentStatus(sessionId).then((result) => {
+          if (result.success) {
+            // Force SubscriptionStatus to remount and refetch
+            setPaymentKey((k) => k + 1);
+          } else {
+            console.error("Payment verification failed:", result.reason || result.error);
+          }
+        });
+      }
+    }
+  }, []);
 
   const handleSimulationSubmit = async (formData: SimulationFormData): Promise<void> => {
     try {
@@ -93,7 +113,7 @@ const AppContent: React.FC = () => {
             <motion.div key="subscription" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}
               className="pt-20 pb-20 min-h-screen bg-stone-50">
               <div className="max-w-5xl mx-auto px-5">
-                <SubscriptionStatus onViewSimulation={handleViewSimulation} />
+                <SubscriptionStatus key={paymentKey} onViewSimulation={handleViewSimulation} />
               </div>
             </motion.div>
           )}
