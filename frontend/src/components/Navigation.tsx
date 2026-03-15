@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
+
+const AccountIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="5" width="20" height="14" rx="2" />
+    <line x1="2" y1="10" x2="22" y2="10" />
+  </svg>
+);
 
 interface NavigationProps {
   onLogoClick: () => void;
@@ -13,6 +20,9 @@ const Navigation: React.FC<NavigationProps> = ({ onLogoClick, onSubscriptionClic
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const isHome = location.pathname === '/';
+  const light = scrolled || !isHome;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -22,7 +32,7 @@ const Navigation: React.FC<NavigationProps> = ({ onLogoClick, onSubscriptionClic
 
   const scrollTo = (id: string) => {
     setMobileOpen(false);
-    if (location.pathname !== '/') {
+    if (!isHome) {
       onLogoClick();
       setTimeout(() => {
         document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
@@ -34,12 +44,12 @@ const Navigation: React.FC<NavigationProps> = ({ onLogoClick, onSubscriptionClic
 
   return (
     <nav className={`fixed top-0 w-full z-50 transition-colors duration-200 ${
-      scrolled ? 'bg-white/90 backdrop-blur-md border-b border-stone-200' : 'bg-transparent'
+      light ? 'bg-white/90 backdrop-blur-md border-b border-stone-200' : 'bg-transparent'
     }`}>
       <div className="max-w-5xl mx-auto px-5">
         <div className="flex justify-between items-center h-14">
           <button onClick={onLogoClick} className={`font-display text-xl tracking-tight italic transition-colors ${
-            scrolled ? 'text-stone-900' : 'text-white'
+            light ? 'text-stone-900' : 'text-white'
           }`}>
             parallax
           </button>
@@ -47,35 +57,36 @@ const Navigation: React.FC<NavigationProps> = ({ onLogoClick, onSubscriptionClic
           <div className="hidden md:flex items-center gap-6 text-[13px]">
             {['features', 'pricing'].map((s) => (
               <button key={s} onClick={() => scrollTo(s)} className={`hover:text-stone-900 transition-colors capitalize ${
-                scrolled ? 'text-stone-500' : 'text-stone-400 hover:text-white'
+                light ? 'text-stone-500' : 'text-stone-400 hover:text-white'
               }`}>
                 {s}
               </button>
             ))}
-            <SignedIn>
-              <button onClick={onSubscriptionClick} className={`hover:text-stone-900 transition-colors ${
-                scrolled ? 'text-stone-500' : 'text-stone-400 hover:text-white'
-              }`}>
-                Account
-              </button>
-            </SignedIn>
           </div>
 
           <div className="flex items-center gap-3">
             <SignedOut>
               <SignInButton>
                 <button className={`hidden md:block text-[13px] font-medium transition-colors ${
-                  scrolled ? 'text-stone-900 hover:text-stone-600' : 'text-white hover:text-stone-300'
+                  light ? 'text-stone-900 hover:text-stone-600' : 'text-white hover:text-stone-300'
                 }`}>
                   Sign in
                 </button>
               </SignInButton>
             </SignedOut>
             <SignedIn>
-              <UserButton />
+              <UserButton>
+                <UserButton.MenuItems>
+                  <UserButton.Action
+                    label="Account"
+                    labelIcon={<AccountIcon />}
+                    onClick={() => navigate('/account')}
+                  />
+                </UserButton.MenuItems>
+              </UserButton>
             </SignedIn>
             <button onClick={() => setMobileOpen(!mobileOpen)} className={`md:hidden p-1.5 ${
-              scrolled ? 'text-stone-600' : 'text-white'
+              light ? 'text-stone-600' : 'text-white'
             }`}>
               {mobileOpen ? <X size={18} /> : <Menu size={18} />}
             </button>

@@ -24,6 +24,12 @@ module.exports = {
           900: '#74360f',
         },
       },
+      keyframes: {
+        popIn: {
+          '0%': { opacity: '0', transform: 'scale(0.95)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+      },
       boxShadow: {
         'elevated': '0 1px 2px rgba(28,25,23,0.04), 0 4px 12px rgba(28,25,23,0.06)',
         'card': '0 2px 4px rgba(28,25,23,0.03), 0 8px 24px rgba(28,25,23,0.08)',

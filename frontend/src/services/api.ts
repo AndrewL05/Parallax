@@ -1,5 +1,14 @@
 import type { RequestOptions } from '../types/api';
 
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:8000";
 const API_BASE = `${BACKEND_URL}/api`;
 
@@ -35,10 +44,11 @@ class ApiService {
           error: error,
         });
 
-        throw new Error(
+        throw new ApiError(
           error.detail ||
             error.message ||
-            `HTTP ${response.status}: ${response.statusText}`
+            `HTTP ${response.status}: ${response.statusText}`,
+          response.status
         );
       }
 

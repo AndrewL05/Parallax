@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@clerk/clerk-react";
 import { stripeService } from "../services/stripeService";
+import { ApiError } from "../services/api";
 
 const PricingSection: React.FC = () => {
   const { getToken, isSignedIn } = useAuth();
+  const [popupMessage, setPopupMessage] = useState<string | null>(null);
 
   const handlePremium = async () => {
     try {
@@ -13,7 +15,11 @@ const PricingSection: React.FC = () => {
       if (checkout.url) window.location.href = checkout.url;
     } catch (error) {
       console.error("Checkout failed:", error);
-      alert("Failed to start checkout.");
+      if (error instanceof ApiError && error.status === 400 && error.message.toLowerCase().includes("already have")) {
+        setPopupMessage("already_premium");
+      } else {
+        setPopupMessage(error instanceof Error ? error.message : "Failed to start checkout.");
+      }
     }
   };
 
@@ -119,6 +125,39 @@ const PricingSection: React.FC = () => {
           </motion.div>
         </div>
       </div>
+
+      {/* Popup notification */}
+      {popupMessage && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+          onClick={() => setPopupMessage(null)}
+        >
+          <div
+            className="bg-white rounded-2xl shadow-elevated py-10 px-10 w-full max-w-md mx-4 text-center animate-[popIn_0.15s_ease-out]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 bg-accent-50 rounded-full flex items-center justify-center mx-auto mb-5">
+              <svg className="w-6 h-6 text-accent-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-stone-900 mb-2 font-display">
+              {popupMessage === "already_premium" ? "Already Premium" : "Checkout Error"}
+            </h3>
+            <p className="text-sm text-stone-500 mb-8">
+              {popupMessage === "already_premium"
+                ? "You already have a premium subscription."
+                : popupMessage}
+            </p>
+            <button
+              onClick={() => setPopupMessage(null)}
+              className="w-full py-3.5 bg-stone-900 text-white rounded-xl text-sm font-semibold hover:bg-stone-800 transition-colors"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 };
