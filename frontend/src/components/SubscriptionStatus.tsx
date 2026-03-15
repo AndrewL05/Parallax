@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@clerk/clerk-react';
 import { Check, X, Clock, TrendingUp, ArrowUpRight } from 'lucide-react';
 import { premiumService, SubscriptionAnalytics } from '../services/premiumService';
 import { simulationService } from '../services/simulationService';
 import { stripeService } from '../services/stripeService';
+import { ApiError } from '../services/api';
 import type { SimulationResult } from '../types/api';
 
 interface SubscriptionStatusProps {
@@ -18,6 +19,7 @@ const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({ onViewSimulatio
   const [loading, setLoading] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [popupMessage, setPopupMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (isSignedIn) {
@@ -69,8 +71,12 @@ const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({ onViewSimulatio
       const token = await getToken();
       const checkout = await stripeService.createCheckoutSession('premium_monthly', token || undefined);
       if (checkout.url) window.location.href = checkout.url;
-    } catch {
-      alert('Failed to start checkout. Please try again.');
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 400 && error.message.toLowerCase().includes('already have')) {
+        setPopupMessage('already_premium');
+      } else {
+        setPopupMessage(error instanceof Error ? error.message : 'Failed to start checkout.');
+      }
     }
   };
 
@@ -232,6 +238,48 @@ const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({ onViewSimulatio
           ))}
         </div>
       )}
+
+      {/* Popup notification */}
+      <AnimatePresence>
+        {popupMessage && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setPopupMessage(null)}
+          >
+            <motion.div
+              className="bg-white rounded-2xl shadow-elevated p-8 max-w-sm mx-4 text-center"
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              transition={{ duration: 0.2 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-12 h-12 bg-accent-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-6 h-6 text-accent-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-stone-900 mb-2 font-display">
+                {popupMessage === 'already_premium' ? 'Already Premium' : 'Checkout Error'}
+              </h3>
+              <p className="text-sm text-stone-500 mb-6">
+                {popupMessage === 'already_premium'
+                  ? 'You already have a premium subscription.'
+                  : popupMessage}
+              </p>
+              <button
+                onClick={() => setPopupMessage(null)}
+                className="w-full py-3 bg-stone-900 text-white rounded-xl text-sm font-semibold hover:bg-stone-800 transition-colors"
+              >
+                Got it
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
