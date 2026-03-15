@@ -20,6 +20,9 @@ const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({ onViewSimulatio
   const [historyLoading, setHistoryLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [popupMessage, setPopupMessage] = useState<string | null>(null);
+  const [showManage, setShowManage] = useState(false);
+  const [cancelConfirm, setCancelConfirm] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     if (isSignedIn) {
@@ -77,6 +80,22 @@ const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({ onViewSimulatio
       } else {
         setPopupMessage(error instanceof Error ? error.message : 'Failed to start checkout.');
       }
+    }
+  };
+
+  const handleCancel = async () => {
+    try {
+      setCancelling(true);
+      const token = await getToken();
+      if (!token) throw new Error('Not authenticated');
+      await premiumService.cancelSubscription(token);
+      setCancelConfirm(false);
+      setShowManage(false);
+      await fetchSubscriptionStatus();
+    } catch (err) {
+      setPopupMessage(err instanceof Error ? err.message : 'Failed to cancel subscription.');
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -153,7 +172,11 @@ const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({ onViewSimulatio
         )}
         {subscription.tier === 'premium' && (
           <div className="mb-10">
-            <button className="w-full py-3 border-2 border-stone-300 rounded-xl text-sm font-medium text-stone-700 hover:border-stone-500 transition-colors">
+            <button
+              onClick={() => { setShowManage(true); setCancelConfirm(false); }}
+              className="w-full py-3 border-2 border-stone-300 rounded-xl text-sm font-medium text-stone-700
+                hover:border-stone-500 hover:bg-stone-50 active:scale-[0.995] transition-colors"
+            >
               Manage subscription
             </button>
           </div>
@@ -236,6 +259,114 @@ const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({ onViewSimulatio
               onView={() => onViewSimulation?.(sim)}
             />
           ))}
+        </div>
+      )}
+
+      {/* Manage subscription drawer */}
+      {showManage && analytics && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 backdrop-blur-sm
+            animate-[fadeIn_0.1s_ease-out]"
+          onClick={() => { setShowManage(false); setCancelConfirm(false); }}
+        >
+          <div
+            className="bg-white w-full max-w-lg rounded-t-2xl shadow-float
+              animate-[slideUp_0.25s_cubic-bezier(0.16,1,0.3,1)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Drag handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 rounded-full bg-stone-200" />
+            </div>
+
+            <div className="px-6 sm:px-8 pt-4 pb-8">
+              <h3 className="text-lg font-semibold text-stone-900 font-display mb-1">
+                Manage subscription
+              </h3>
+              <p className="text-sm text-stone-400 mb-6">Premium plan details and options</p>
+
+              {/* Plan details grid */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-stone-50 rounded-xl p-4">
+                  <p className="text-[11px] tracking-widest uppercase text-stone-400 mb-1">Plan</p>
+                  <p className="text-sm font-medium text-stone-900">
+                    Premium
+                  </p>
+                </div>
+                <div className="bg-stone-50 rounded-xl p-4">
+                  <p className="text-[11px] tracking-widest uppercase text-stone-400 mb-1">Billing</p>
+                  <p className="text-sm font-medium text-stone-900 capitalize">
+                    {analytics.subscription.billing_period || 'Monthly'}
+                  </p>
+                </div>
+                <div className="bg-stone-50 rounded-xl p-4">
+                  <p className="text-[11px] tracking-widest uppercase text-stone-400 mb-1">Status</p>
+                  <p className="text-sm font-medium text-stone-900">
+                    {analytics.subscription.is_trial ? 'Trial' : 'Active'}
+                  </p>
+                </div>
+                <div className="bg-stone-50 rounded-xl p-4">
+                  <p className="text-[11px] tracking-widest uppercase text-stone-400 mb-1">
+                    {analytics.subscription.is_trial ? 'Trial ends in' : 'Renews in'}
+                  </p>
+                  <p className="text-sm font-medium text-stone-900">
+                    {analytics.subscription.days_until_expiry != null
+                      ? `${analytics.subscription.days_until_expiry} days`
+                      : '—'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Divider */}
+              <div className="h-px bg-stone-100 mb-6" />
+
+              {/* Cancel section */}
+              {!cancelConfirm ? (
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => { setShowManage(false); setCancelConfirm(false); }}
+                    className="flex-1 py-3 bg-stone-900 text-white rounded-xl text-sm font-medium
+                      hover:bg-stone-800 active:scale-[0.98] transition-colors"
+                  >
+                    Done
+                  </button>
+                  <button
+                    onClick={() => setCancelConfirm(true)}
+                    className="py-3 px-5 rounded-xl text-sm font-medium text-stone-400
+                      hover:text-red-500 hover:bg-red-50 active:scale-[0.98] transition-colors"
+                  >
+                    Cancel plan
+                  </button>
+                </div>
+              ) : (
+                <div className="animate-[popIn_0.15s_ease-out]">
+                  <div className="bg-red-50 border border-red-100 rounded-xl p-4 mb-4">
+                    <p className="text-sm text-red-800 font-medium mb-1">Cancel your subscription?</p>
+                    <p className="text-sm text-red-600/70">
+                      You'll keep access until the end of your current billing period, then revert to the free plan.
+                    </p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setCancelConfirm(false)}
+                      className="flex-1 py-3 bg-stone-900 text-white rounded-xl text-sm font-medium
+                        hover:bg-stone-800 active:scale-[0.98] transition-colors"
+                    >
+                      Keep premium
+                    </button>
+                    <button
+                      onClick={handleCancel}
+                      disabled={cancelling}
+                      className="flex-1 py-3 border-2 border-red-200 text-red-600 rounded-xl text-sm font-medium
+                        hover:bg-red-50 hover:border-red-300 disabled:opacity-50 active:scale-[0.98] transition-colors"
+                    >
+                      {cancelling ? 'Cancelling...' : 'Yes, cancel'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 
