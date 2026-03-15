@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react';
+import { useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 
 interface NavigationProps {
@@ -11,6 +12,7 @@ interface NavigationProps {
 const Navigation: React.FC<NavigationProps> = ({ onLogoClick, onSubscriptionClick }) => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10);
@@ -20,10 +22,14 @@ const Navigation: React.FC<NavigationProps> = ({ onLogoClick, onSubscriptionClic
 
   const scrollTo = (id: string) => {
     setMobileOpen(false);
-    onLogoClick();
-    setTimeout(() => {
+    if (location.pathname !== '/') {
+      onLogoClick();
+      setTimeout(() => {
+        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    } else {
       document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
+    }
   };
 
   return (
