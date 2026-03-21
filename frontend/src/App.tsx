@@ -13,6 +13,7 @@ import FooterSection from "./components/Footer";
 import LifeChoiceForm from "./components/LifeChoiceForm";
 import SimulationResults from "./components/SimulationResults";
 import SubscriptionStatus from "./components/SubscriptionStatus";
+import DemoPage from "./components/DemoPage";
 
 import { useAuth } from "./hooks/useAuth";
 import { useSimulation } from "./hooks/useSimulation";
@@ -138,6 +139,7 @@ const AppContent: React.FC = () => {
               </motion.div>
             } />
 
+            <Route path="/demo" element={<DemoPage />} />
             <Route path="/success" element={<SuccessPage />} />
 
             <Route path="*" element={<HomePage onSubmit={handleSimulationSubmit} isLoading={isLoading} />} />
