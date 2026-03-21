@@ -1,24 +1,23 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 const HeroSection: React.FC = () => {
+  const navigate = useNavigate();
   const scrollToSimulator = () => {
     document.getElementById("simulator")?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
     <section className="relative min-h-screen flex items-center justify-center bg-stone-950 overflow-hidden grain">
-      {/* Radial glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px] bg-gradient-radial rounded-full opacity-[0.07]"
         style={{ background: 'radial-gradient(ellipse at center, rgba(236,154,12,0.3) 0%, transparent 70%)' }} />
 
-      {/* Diverging paths — the visual identity */}
       <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
         <line x1="50%" y1="12%" x2="22%" y2="98%" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
         <line x1="50%" y1="12%" x2="78%" y2="98%" stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
         <line x1="50%" y1="12%" x2="18%" y2="98%" stroke="rgba(255,255,255,0.025)" strokeWidth="1" />
         <line x1="50%" y1="12%" x2="82%" y2="98%" stroke="rgba(255,255,255,0.025)" strokeWidth="1" />
-        {/* Fork point dot */}
         <circle cx="50%" cy="12%" r="2" fill="rgba(236,154,12,0.3)" />
       </svg>
 
@@ -66,7 +65,18 @@ const HeroSection: React.FC = () => {
           Try it now
         </motion.button>
 
-        {/* Metrics */}
+        <motion.button
+          onClick={() => { navigate("/demo"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+          className="ml-4 px-6 py-4 text-stone-400 text-sm font-medium hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950 transition-colors"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.4 }}
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+        >
+          See a demo
+        </motion.button>
+
         <motion.div
           className="flex items-center justify-center gap-10 sm:gap-16 mt-20"
           initial={{ opacity: 0 }}
@@ -86,7 +96,6 @@ const HeroSection: React.FC = () => {
         </motion.div>
       </div>
 
-      {/* Bottom fade to white */}
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent" />
     </section>
   );
