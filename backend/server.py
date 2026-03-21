@@ -16,6 +16,7 @@ from routes.simulation import router as simulation_router
 from routes.payments import router as payments_router
 from routes.premium import router as premium_router
 from routes.ml_scenarios import router as ml_scenarios_router
+from routes.demo import router as demo_router
 from database import init_database, close_database
 
 logging.basicConfig(level=logging.INFO)
@@ -65,15 +66,16 @@ app.include_router(simulation_router, prefix="/api")
 app.include_router(payments_router, prefix="/api")
 app.include_router(premium_router, prefix="/api")
 app.include_router(ml_scenarios_router)
+app.include_router(demo_router, prefix="/api")
 
 @app.get("/api/")
 async def root():
-    """API health check"""
+    # API health check
     return {"message": API_TITLE, "version": API_VERSION, "status": "healthy"}
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialize services on startup"""
+    # Initialize services on startup
     logger.info("Starting Parallax Life Simulator API...")
     try:
         await init_database()
@@ -87,7 +89,7 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Cleanup on shutdown"""
+    # Cleanup on shutdown
     logger.info("Shutting down Parallax Life Simulator API...")
     try:
         await close_database()
@@ -97,7 +99,7 @@ async def shutdown_event():
 
 @app.get("/health")
 async def health_check():
-    """System health check"""
+    # System health check
     return {
         "status": "healthy",
         "service": API_TITLE,
