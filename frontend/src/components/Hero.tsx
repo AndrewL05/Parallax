@@ -67,14 +67,14 @@ const HeroSection: React.FC = () => {
 
         <motion.button
           onClick={() => { navigate("/demo"); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-          className="ml-4 px-6 py-4 text-stone-400 text-sm font-medium hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950 transition-colors"
+          className="ml-4 px-8 py-4 border border-white/25 text-white/80 text-sm font-medium rounded-full hover:border-white/50 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 focus-visible:ring-offset-2 focus-visible:ring-offset-stone-950 active:bg-white/5 transition-colors"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.4 }}
           whileHover={{ scale: 1.03 }}
           whileTap={{ scale: 0.97 }}
         >
-          See a demo
+          View demo
         </motion.button>
 
         <motion.div
