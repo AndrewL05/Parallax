@@ -62,6 +62,11 @@ const Navigation: React.FC<NavigationProps> = ({ onLogoClick, onSubscriptionClic
                 {s}
               </button>
             ))}
+            <button onClick={() => { navigate('/demo'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className={`hover:text-stone-900 transition-colors ${
+              light ? 'text-stone-500' : 'text-stone-400 hover:text-white'
+            }`}>
+              Demo
+            </button>
           </div>
 
           <div className="flex items-center gap-3">
@@ -108,6 +113,9 @@ const Navigation: React.FC<NavigationProps> = ({ onLogoClick, onSubscriptionClic
                   {s}
                 </button>
               ))}
+              <button onClick={() => { setMobileOpen(false); navigate('/demo'); window.scrollTo({ top: 0, behavior: 'smooth' }); }} className="block w-full text-left py-2.5 text-sm text-stone-600 hover:text-stone-900">
+                Demo
+              </button>
               <SignedIn>
                 <button onClick={() => { setMobileOpen(false); onSubscriptionClick?.(); }} className="block w-full text-left py-2.5 text-sm text-stone-600">
                   Account
