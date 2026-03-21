@@ -12,6 +12,10 @@ class SimulationService {
     return apiService.get<SimulationResult[]>('/simulations', headers);
   }
 
+  async getDemoSimulation(): Promise<SimulationResult> {
+    return apiService.get<SimulationResult>('/demo/simulation');
+  }
+
   async syncUserProfile(userData: UserData, token?: string): Promise<any> {
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
     return apiService.post('/auth/sync', userData, headers);
